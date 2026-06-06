@@ -19,17 +19,17 @@
   html, body { margin: 0; min-height: 100%; }
   body {
     font-family: var(--font-body, system-ui, sans-serif);
-    direction: rtl; min-height: 100vh;
-    display: flex; align-items: center; justify-content: center;
+    direction: rtl; min-height: 100vh; min-height: 100dvh;
+    display: flex;
     padding: 36px 20px; color: #fff; -webkit-font-smoothing: antialiased;
     background: linear-gradient(125deg, #020140 0%, #14155f 55%, #21357e 100%);
-    position: relative; overflow: hidden;
+    position: relative;
   }
   body::before { content: ""; position: absolute; inset: 0; pointer-events: none;
     background: radial-gradient(620px 400px at 12% 112%, rgba(162,235,154,.18), transparent 70%); }
   body::after { content: ""; position: absolute; inset: 0; pointer-events: none;
     background: radial-gradient(520px 360px at 92% -10%, rgba(61,101,227,.22), transparent 70%); }
-  .wrap { position: relative; width: 100%; max-width: 940px; text-align: center; }
+  .wrap { position: relative; width: 100%; max-width: 940px; text-align: center; margin: auto; }
   .logo { height: 40px; margin: 0 auto 30px; display: block; }
   .eyebrow { display: inline-flex; align-items: center; gap: 8px;
     background: rgba(162,235,154,.16); color: var(--mig-green, #a2eb9a);
