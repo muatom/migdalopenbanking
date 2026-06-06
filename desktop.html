@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>מגדל · חיסכון חכם — Smart Auto-Savings Flow</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="tokens.css" rel="stylesheet">
+<link href="styles.css" rel="stylesheet">
+<meta name="ext-resource-dependency" content="assets/migdal-logo.png" data-resource-id="migdalLogo" />
+<meta name="ext-resource-dependency" content="assets/migdal-logo-white.png" data-resource-id="migdalLogoWhite" />
+<template id="__bundler_thumbnail" data-bg-color="#020140">
+  <svg viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg">
+    <rect width="1200" height="800" fill="#020140"/>
+    <circle cx="600" cy="360" r="150" fill="#a2eb9a"/>
+    <text x="600" y="360" font-family="Arial, sans-serif" font-size="120" font-weight="800" fill="#020140" text-anchor="middle" dominant-baseline="central">₪</text>
+    <text x="600" y="600" font-family="Arial, sans-serif" font-size="64" font-weight="800" fill="#ffffff" text-anchor="middle">חיסכון חכם</text>
+  </svg>
+</template>
+</head>
+<body>
+<div id="root"></div>
+
+<!-- View switcher (integration overlay — outside the React tree) -->
+<a href="index.html" class="view-switch" aria-label="החלף תצוגה">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+  החלף תצוגה
+</a>
+<style>
+.view-switch{position:fixed;bottom:16px;left:16px;z-index:9999;display:inline-flex;align-items:center;gap:7px;
+  background:rgba(2,1,64,.92);color:#fff;font-family:var(--font-body,system-ui);font-weight:700;font-size:13px;
+  padding:9px 15px;border-radius:999px;text-decoration:none;box-shadow:0 8px 22px rgba(0,0,0,.3);
+  -webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,.14);}
+.view-switch svg{width:16px;height:16px;color:var(--mig-green,#a2eb9a);}
+.view-switch:hover{background:#020140;}
+</style>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<script type="text/babel" src="chrome.jsx"></script>
+<script type="text/babel" src="screens-a.jsx"></script>
+<script type="text/babel" src="screens-b.jsx"></script>
+<script type="text/babel" src="screens-c.jsx"></script>
+
+<script type="text/babel">
+const { useState, useEffect, useRef } = React;
+
+const STEPS = [
+  { id: 0, label: "גילוי" },
+  { id: 1, label: "הסבר ערך" },
+  { id: 2, label: "חיבור בנק" },
+  { id: 3, label: "אשף · רצפה" },
+  { id: 4, label: "אשף · הזדמנות" },
+  { id: 5, label: "אשף · הקצאה ואישור" },
+  { id: 6, label: "אשף · יעד וסיכום" },
+  { id: 7, label: "הופעל" },
+  { id: 8, label: "דשבורד" },
+  { id: 9, label: "חודש חזק · אישור בנק" },
+];
+
+const DEFAULT_WZ = {
+  floor: 500,
+  rules: {
+    cashflow: { on: true, pct: 20 },
+    ceiling: { on: false, cap: 7000 },
+    fixed: { on: false, amt: 300 },
+    salary: { on: false, pct: 10 },
+  },
+  alloc: { gemel: 60, policy: 40 },
+  approval: { floor: "auto", opp: "r2p" },
+  guard: { on: true, balanceFloor: 3000, monthlyCap: 4000 },
+  goal: 100000,
+};
+
+const LS = "migdal-smart-savings-v1";
+function load() {
+  try { return JSON.parse(localStorage.getItem(LS)) || {}; } catch (e) { return {}; }
+}
+
+function App() {
+  const saved = load();
+  const [step, setStep] = useState(saved.step || 0);
+  const [activated, setActivated] = useState(saved.activated || false);
+  const [bank, setBank] = useState(saved.bank || null);
+  const [pushApproved, setPushApproved] = useState(saved.pushApproved || false);
+  const [paused, setPaused] = useState(saved.paused || false);
+  const [wz, setWz] = useState(saved.wz || DEFAULT_WZ);
+  const [toast, setToast] = useState(false);
+  const viewRef = useRef(null);
+
+  // persist
+  useEffect(() => {
+    localStorage.setItem(LS, JSON.stringify({ step, activated, bank, pushApproved, paused, wz }));
+  }, [step, activated, bank, pushApproved, paused, wz]);
+
+  function go(n) {
+    if (n === 7) setActivated(true);
+    setStep(n);
+    if (viewRef.current) viewRef.current.scrollTo({ top: 0, behavior: "auto" });
+  }
+  const upd = (patch) => setWz((p) => ({ ...p, ...patch }));
+
+  function onApprove() {
+    setPushApproved(true);
+    setToast(true);
+    setTimeout(() => setToast(false), 3600);
+  }
+
+  function reset() {
+    setStep(0); setActivated(false); setBank(null); setPushApproved(false); setPaused(false); setWz(DEFAULT_WZ);
+  }
+
+  function renderScreen() {
+    switch (step) {
+      case 0: return <HomeScreen go={go} activated={activated} surplus={2300} />;
+      case 1: return <EducationScreen go={go} />;
+      case 2: return <ConnectScreen go={go} setBank={setBank} />;
+      case 3: case 4: case 5: case 6:
+        return <WizardScreen step={step} go={go} wz={wz} upd={upd} bank={bank} />;
+      case 7: return <ConfirmScreen go={go} wz={wz} bank={bank} />;
+      case 8: return <Dashboard go={go} wz={wz} pushApproved={pushApproved} paused={paused} setPaused={setPaused} />;
+      case 9: return (
+        <React.Fragment>
+          <Dashboard go={go} wz={wz} pushApproved={pushApproved} paused={paused} setPaused={setPaused} />
+          <StrongMonth go={go} onApprove={onApprove} bank={bank} />
+        </React.Fragment>
+      );
+      default: return null;
+    }
+  }
+
+  return (
+    <React.Fragment>
+      <div className="browser">
+        <div className="browser-bar">
+          <div className="dots"><i></i><i></i><i></i></div>
+          <div className="url"><Icon name="lock" className="lock" /> my.migdal.co.il/personal/smart-savings</div>
+          <div style={{ width: 54 }}></div>
+        </div>
+        <div className="browser-view" ref={viewRef}>
+          {toast && <div className="toast"><Icon name="check" /> ₪1,500 הופקדו לקופת הגמל להשקעה · הטראקר עודכן</div>}
+          <Header onHome={() => go(0)} />
+          <SubNav active="המוצרים שלי" />
+          {renderScreen()}
+        </div>
+      </div>
+
+      {/* Flow navigator */}
+      <div className="navrail">
+        <button className="narr" disabled={step === 0} onClick={() => go(step - 1)}><Icon name="chevron-right" /></button>
+        {STEPS.map((s, i) => (
+          <React.Fragment key={s.id}>
+            {(i === 3 || i === 7) && <span className="nsep"></span>}
+            <span className={"nstep" + (step === s.id ? " cur" : "")} title={s.label} onClick={() => go(s.id)}>{s.id}</span>
+          </React.Fragment>
+        ))}
+        <span className="nlabel">{STEPS[step].label}</span>
+        <button className="narr" disabled={step === 9} onClick={() => go(step + 1)}><Icon name="chevron-left" /></button>
+      </div>
+    </React.Fragment>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>

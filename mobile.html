@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>מגדל · חיסכון חכם — אפליקציית מובייל</title>
+<link href="tokens.css" rel="stylesheet">
+<link href="mobile.css" rel="stylesheet">
+<meta name="ext-resource-dependency" content="assets/migdal-tower.png" data-resource-id="migdalTower" />
+<meta name="ext-resource-dependency" content="assets/migdal-logo-white.png" data-resource-id="migdalLogoWhite" />
+<template id="__bundler_thumbnail" data-bg-color="#020140">
+  <svg viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg">
+    <rect width="1200" height="800" fill="#020140"/>
+    <rect x="470" y="180" width="260" height="440" rx="46" fill="#0a0a52" stroke="#a2eb9a" stroke-width="6"/>
+    <circle cx="600" cy="400" r="74" fill="#a2eb9a"/>
+    <text x="600" y="400" font-family="Arial" font-size="64" font-weight="800" fill="#020140" text-anchor="middle" dominant-baseline="central">₪</text>
+  </svg>
+</template>
+<style>
+  html, body { margin: 0; height: 100%; background: #0a0a14; overflow: hidden; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<!-- View switcher (integration overlay — outside the React tree) -->
+<a href="index.html" class="view-switch" aria-label="החלף תצוגה">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+  החלף תצוגה
+</a>
+<style>
+.view-switch{position:fixed;bottom:16px;left:16px;z-index:9999;display:inline-flex;align-items:center;gap:7px;
+  background:rgba(2,1,64,.92);color:#fff;font-family:var(--font-body,system-ui);font-weight:700;font-size:13px;
+  padding:9px 15px;border-radius:999px;text-decoration:none;box-shadow:0 8px 22px rgba(0,0,0,.3);
+  -webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,.14);}
+.view-switch svg{width:16px;height:16px;color:var(--mig-green,#a2eb9a);}
+.view-switch:hover{background:#020140;}
+</style>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<script type="text/babel" src="chrome.jsx"></script>
+<script type="text/babel" src="mobile-chrome.jsx"></script>
+<script type="text/babel" src="mobile-screens-a.jsx"></script>
+<script type="text/babel" src="mobile-screens-b.jsx"></script>
+<script type="text/babel" src="mobile-screens-c.jsx"></script>
+
+<script type="text/babel">
+const { useState: useStateApp, useEffect: useEffectApp } = React;
+
+const M_STEPS = [
+  { id: 0, label: "גילוי" },
+  { id: 1, label: "הסבר ערך" },
+  { id: 2, label: "חיבור בנק" },
+  { id: 3, label: "אשף · רצפה" },
+  { id: 4, label: "אשף · הזדמנות" },
+  { id: 5, label: "אשף · הקצאה" },
+  { id: 6, label: "אשף · יעד וסיכום" },
+  { id: 7, label: "הופעל" },
+  { id: 8, label: "דשבורד" },
+  { id: 9, label: "חודש חזק · בנק" },
+];
+
+const M_DEFAULT_WZ = {
+  floor: 500,
+  rules: {
+    cashflow: { on: true, pct: 20 },
+    ceiling: { on: false, cap: 7000 },
+    fixed: { on: false, amt: 300 },
+    salary: { on: false, pct: 10 },
+  },
+  alloc: { gemel: 60, policy: 40 },
+  approval: { floor: "auto", opp: "r2p" },
+  guard: { on: true, balanceFloor: 3000, monthlyCap: 4000 },
+  goal: 100000,
+};
+
+const M_LS = "migdal-smart-savings-mobile-v1";
+function mLoad() { try { return JSON.parse(localStorage.getItem(M_LS)) || {}; } catch (e) { return {}; } }
+
+function App() {
+  const saved = mLoad();
+  const [step, setStep] = useStateApp(saved.step || 0);
+  const [activated, setActivated] = useStateApp(saved.activated || false);
+  const [bank, setBank] = useStateApp(saved.bank || null);
+  const [pushApproved, setPushApproved] = useStateApp(saved.pushApproved || false);
+  const [paused, setPaused] = useStateApp(saved.paused || false);
+  const [wz, setWz] = useStateApp(saved.wz || M_DEFAULT_WZ);
+  const [toast, setToast] = useStateApp(false);
+  const [scale, setScale] = useStateApp(1);
+
+  useEffectApp(() => {
+    localStorage.setItem(M_LS, JSON.stringify({ step, activated, bank, pushApproved, paused, wz }));
+  }, [step, activated, bank, pushApproved, paused, wz]);
+
+  // fit-to-viewport scaling
+  useEffectApp(() => {
+    function fit() {
+      const w = window.innerWidth, h = window.innerHeight;
+      if (w < 40 || h < 120) return; // guard against transient zero/tiny viewport
+      const margin = 40, railH = 70;
+      const s = Math.min((w - margin) / 393, (h - margin - railH) / 852);
+      setScale(Math.max(0.25, Math.min(s, 1.15)));
+    }
+    fit();
+    window.addEventListener("resize", fit);
+    const t = setTimeout(fit, 300);
+    return () => { window.removeEventListener("resize", fit); clearTimeout(t); };
+  }, []);
+
+  function go(n) {
+    if (n === 7) setActivated(true);
+    setStep(n);
+    const sc = document.querySelector(".m-scroll");
+    if (sc) sc.scrollTo({ top: 0, behavior: "auto" });
+  }
+  const upd = (patch) => setWz((p) => ({ ...p, ...patch }));
+
+  function onApprove() {
+    setPushApproved(true);
+    setToast(true);
+    setTimeout(() => setToast(false), 3600);
+  }
+
+  // which screens show the persistent bottom tab nav (destinations, not flow)
+  const showNav = step === 0 || step === 8;
+  const headerLeft = step === 0 ? "mail" : "back";
+
+  function renderScreen() {
+    switch (step) {
+      case 0: return <MHome go={go} activated={activated} />;
+      case 1: return <MEducation go={go} />;
+      case 2: return <MConnect go={go} setBank={setBank} />;
+      case 3: case 4: case 5: case 6:
+        return <MWizard step={step} go={go} wz={wz} upd={upd} bank={bank} />;
+      case 7: return <MConfirm go={go} wz={wz} bank={bank} />;
+      case 8: return <MDashboard go={go} wz={wz} pushApproved={pushApproved} paused={paused} setPaused={setPaused} />;
+      case 9: return <MDashboard go={go} wz={wz} pushApproved={pushApproved} paused={paused} setPaused={setPaused} />;
+      default: return null;
+    }
+  }
+
+  return (
+    <div className="stage">
+      <div className="stage-scale" style={{ transform: "scale(" + scale + ")" }}>
+        <div className="device">
+          <div className="island"></div>
+          <div className="home-ind"></div>
+          <div className="device-screen">
+            <div className="m-app">
+              <StatusBar />
+              <MHeader left={headerLeft} onLeft={() => go(Math.max(0, step - 1))} onHome={() => go(0)} />
+              {toast && <div className="m-toast"><Icon name="check" /> ₪1,500 הופקדו לקופת הגמל · הטראקר עודכן</div>}
+              {renderScreen()}
+              {showNav && <BottomNav />}
+              {step === 9 && <MStrongMonth go={go} onApprove={onApprove} bank={bank} />}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Flow navigator (outside device) */}
+      <div className="navrail">
+        <button className="narr" disabled={step === 0} onClick={() => go(step - 1)}><Icon name="chevron-left" /></button>
+        {M_STEPS.map((s, i) => (
+          <React.Fragment key={s.id}>
+            {(i === 3 || i === 7) && <span className="nsep"></span>}
+            <span className={"nstep" + (step === s.id ? " cur" : "")} title={s.label} onClick={() => go(s.id)}>{s.id}</span>
+          </React.Fragment>
+        ))}
+        <span className="nlabel">{M_STEPS[step].label}</span>
+        <button className="narr" disabled={step === 9} onClick={() => go(step + 1)}><Icon name="chevron-right" /></button>
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>
