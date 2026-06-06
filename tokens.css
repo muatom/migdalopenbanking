@@ -1,0 +1,145 @@
+/* ============================================================
+   MIGDAL DESIGN SYSTEM — Foundations
+   Colors + Typography tokens
+   ------------------------------------------------------------
+   Brand: Migdal (מגדל) — Israel's leading insurance & finance group.
+   Direction: RTL (Hebrew-first). Latin supported.
+
+   FONTS: Migdal's brand face is **Migdal RagSans** (self-hosted in fonts/).
+   Four weights now supplied and wired: ExtraLight, Light, Bold, Black.
+   Both display AND body use RagSans (body 400 renders the Light cut).
+     - Display / headings : "Migdal RagSans"  (Bold 700, Black 900)
+     - Body / UI          : "Migdal RagSans"  (Light, ~400)
+   RagSans is loaded via @font-face in this file. "Assistant" remains only
+   as a system fallback. Load Assistant from CDN if you want the fallback live:
+   <link rel="preconnect" href="https://fonts.googleapis.com">
+   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+   <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@300;400;500;600;700;800&family=Heebo:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+   ============================================================ */
+
+/* ---------- BRAND FONT (self-hosted) ----------
+   Migdal RagSans — the real brand face. Four supplied weights, all self-hosted.
+   Mapped across the numeric range so body (400) renders Light and headings
+   (700) render Bold; Black (900) is available for big display moments.
+   url() is relative to THIS stylesheet (project root). */
+@font-face {
+  font-family: "Migdal RagSans";
+  src: url("fonts/1_Migdal_RagSans-ExtraLight.otf") format("opentype");
+  font-weight: 100 275; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: "Migdal RagSans";
+  src: url("fonts/1_Migdal_RagSans-Light.otf") format("opentype");
+  font-weight: 300 450; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: "Migdal RagSans";
+  src: url("fonts/1_Migdal_RagSans-Bold.otf") format("opentype");
+  font-weight: 500 800; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: "Migdal RagSans";
+  src: url("fonts/1_Migdal_RagSans-Black.otf") format("opentype");
+  font-weight: 850 1000; font-style: normal; font-display: swap;
+}
+
+:root {
+  /* ---------- BRAND CORE ---------- */
+  --mig-ink:        #020140; /* primary navy — logo, body text, dark surfaces */
+  --mig-ink-2:      #212058; /* softened navy — headings over light-blue bgs   */
+  --mig-blue:       #3d65e3; /* signature indigo — links, "מגדל שלי" portal     */
+  --mig-blue-deep:  #2a49ad; /* pressed / visited indigo                        */
+  --mig-green:      #a2eb9a; /* signature mint — primary CTA fill               */
+  --mig-green-600:  #8fe086; /* CTA hover                                       */
+  --mig-green-700:  #74cf6f; /* CTA pressed                                     */
+  --mig-green-soft: #96e6a1; /* mascot / illustration green                     */
+
+  /* ---------- NEUTRALS ---------- */
+  --mig-white:      #ffffff;
+  --mig-paper:      #fbfbfd; /* page surface, faint cool white                  */
+  --mig-mist:       #f3f6fb; /* section band / hover row                        */
+  --mig-line-soft:  #e2e9f3; /* sub-nav band, hairline fills                    */
+  --mig-line:       #d4ddec; /* borders, dividers                               */
+  --mig-slate-400:  #9aa3bd; /* muted text, placeholders                        */
+  --mig-slate-600:  #5b658a; /* secondary text                                  */
+
+  /* ---------- MARKETING / GRADIENT ---------- */
+  --mig-sky-1:      #d0ebfa; /* hero sky top                                    */
+  --mig-sky-2:      #def0f9; /* hero sky mid                                    */
+  --mig-sand:       #ecf0f3; /* hero floor / horizon                            */
+  --grad-hero: linear-gradient(180deg, var(--mig-sky-1) 0%, var(--mig-sky-2) 48%, var(--mig-sand) 100%);
+
+  /* ---------- SEMANTIC ---------- */
+  --fg-1:           var(--mig-ink);      /* primary text          */
+  --fg-2:           var(--mig-slate-600);/* secondary text        */
+  --fg-3:           var(--mig-slate-400);/* tertiary / disabled   */
+  --fg-on-dark:     var(--mig-white);
+  --fg-link:        var(--mig-blue);
+  --bg-1:           var(--mig-white);    /* base surface          */
+  --bg-2:           var(--mig-mist);     /* raised band           */
+  --bg-dark:        var(--mig-ink);      /* dark surface          */
+  --accent:         var(--mig-green);    /* primary action        */
+  --accent-fg:      var(--mig-ink);      /* text on green         */
+  --success:        #3f8568; /* muted, mint-family green               */
+  --warning:        #8f7636; /* restrained dark gold (de-orange-d)      */
+  --error:          #b65058; /* muted dusty red, reserved for errors    */
+  --info:           var(--mig-blue);
+
+  /* ---------- TYPE FAMILIES ---------- */
+  --font-display: "Migdal RagSans", "Heebo", system-ui, sans-serif;
+  --font-body:    "Migdal RagSans", "Assistant", system-ui, sans-serif;
+  --font-mono:    "SFMono-Regular", ui-monospace, "Menlo", monospace;
+
+  /* ---------- TYPE SCALE (px @ 16 root) ---------- */
+  --fs-display: 60px;  --lh-display: 1.04; --ls-display: -0.01em;
+  --fs-h1:      44px;  --lh-h1:      1.08; --ls-h1:      -0.01em;
+  --fs-h2:      32px;  --lh-h2:      1.12;
+  --fs-h3:      24px;  --lh-h3:      1.2;
+  --fs-h4:      20px;  --lh-h4:      1.25;
+  --fs-lead:    22px;  --lh-lead:    1.45;
+  --fs-body:    18px;  --lh-body:    1.55;
+  --fs-sm:      16px;  --lh-sm:      1.5;
+  --fs-cap:     14px;  --lh-cap:     1.45;
+  --fs-micro:   12px;  --lh-micro:   1.4;
+
+  --fw-light: 300; --fw-reg: 400; --fw-med: 500; --fw-semi: 600; --fw-bold: 700; --fw-black: 800;
+
+  /* ---------- SPACING (4px base) ---------- */
+  --sp-1: 4px;  --sp-2: 8px;  --sp-3: 12px; --sp-4: 16px; --sp-5: 20px;
+  --sp-6: 24px; --sp-8: 32px; --sp-10: 40px; --sp-12: 48px; --sp-16: 64px;
+  --sp-20: 80px; --sp-24: 96px;
+
+  /* ---------- RADII ---------- */
+  --r-xs: 4px; --r-sm: 8px; --r-md: 12px; --r-lg: 16px; --r-xl: 24px; --r-pill: 999px;
+
+  /* ---------- ELEVATION ---------- */
+  --sh-1: 0 1px 2px rgba(2,1,64,.06), 0 1px 1px rgba(2,1,64,.04);
+  --sh-2: 0 4px 12px rgba(2,1,64,.08);
+  --sh-3: 0 12px 32px rgba(2,1,64,.10);
+  --sh-card: 0 18px 48px rgba(2,1,64,.12); /* big elevated marketing card */
+  --sh-focus: 0 0 0 3px rgba(61,101,227,.35);
+}
+
+/* ============================================================
+   SEMANTIC ELEMENT STYLES
+   ============================================================ */
+.mig-display { font-family: var(--font-display); font-weight: var(--fw-black);
+  font-size: var(--fs-display); line-height: var(--lh-display); letter-spacing: var(--ls-display); color: var(--fg-1); }
+.mig-h1 { font-family: var(--font-display); font-weight: var(--fw-bold);
+  font-size: var(--fs-h1); line-height: var(--lh-h1); letter-spacing: var(--ls-h1); color: var(--fg-1); }
+.mig-h2 { font-family: var(--font-display); font-weight: var(--fw-bold);
+  font-size: var(--fs-h2); line-height: var(--lh-h2); color: var(--fg-1); }
+.mig-h3 { font-family: var(--font-display); font-weight: var(--fw-bold);
+  font-size: var(--fs-h3); line-height: var(--lh-h3); color: var(--fg-1); }
+.mig-h4 { font-family: var(--font-body); font-weight: var(--fw-bold);
+  font-size: var(--fs-h4); line-height: var(--lh-h4); color: var(--fg-1); }
+.mig-lead { font-family: var(--font-body); font-weight: var(--fw-reg);
+  font-size: var(--fs-lead); line-height: var(--lh-lead); color: var(--fg-2); }
+.mig-body { font-family: var(--font-body); font-weight: var(--fw-reg);
+  font-size: var(--fs-body); line-height: var(--lh-body); color: var(--fg-1); }
+.mig-sm { font-family: var(--font-body); font-weight: var(--fw-reg);
+  font-size: var(--fs-sm); line-height: var(--lh-sm); color: var(--fg-2); }
+.mig-cap { font-family: var(--font-body); font-weight: var(--fw-med);
+  font-size: var(--fs-cap); line-height: var(--lh-cap); color: var(--fg-3); }
+.mig-link { color: var(--fg-link); text-decoration: none; font-weight: var(--fw-semi); }
+.mig-link:hover { text-decoration: underline; }
