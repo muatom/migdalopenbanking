@@ -538,3 +538,14 @@
   .navrail .nstep { width: 22px; height: 22px; font-size: 11px; }
   .navrail .nav-switch { height: 28px; padding: 0 9px; font-size: 11px; }
 }
+
+/* ---------- Opportunity rule params (income / cashflow / ceiling) ---------- */
+.m-rule-or { display: flex; align-items: center; gap: 10px; margin: 4px 2px 0; }
+.m-rule-or::before, .m-rule-or::after { content: ""; flex: 1; height: 1px; background: var(--mig-line); }
+.m-rule-or span { font-size: 12px; font-weight: 800; color: var(--mig-slate-400); white-space: nowrap; }
+.m-rule-params { border-right: 2px solid var(--mig-line-soft); margin: 2px 8px 10px; padding-right: 4px; }
+.m-capfield { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 6px 2px; }
+.m-capfield .pl { font-size: 13px; font-weight: 700; color: var(--mig-ink); }
+.m-capfield .pl em { display: block; font-style: normal; font-weight: 500; font-size: 11px; color: var(--mig-slate-400); margin-top: 2px; }
+.m-capfield .fld { border: 1.5px solid var(--mig-line); border-radius: 12px; padding: 9px 12px; min-width: 96px; flex: none; }
+.m-capfield .fld input { width: 100%; border: none; outline: none; font-family: var(--font-display); font-weight: 800; font-size: 16px; color: var(--mig-ink); text-align: center; background: none; }

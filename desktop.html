@@ -65,10 +65,9 @@ const STEPS = [
 const DEFAULT_WZ = {
   floor: 500,
   rules: {
-    cashflow: { on: true, pct: 20 },
-    ceiling: { on: false, cap: 7000 },
-    fixed: { on: false, amt: 300 },
-    salary: { on: false, pct: 10 },
+    income: { on: false, pct: 10, min: 10, max: 2000 },
+    cashflow: { on: true, pct: 20, max: 2000 },
+    ceiling: { on: false, cap: 7000, max: 2000 },
   },
   alloc: { gemel: 60, policy: 40 },
   approval: { floor: "auto", opp: "r2p" },
@@ -76,7 +75,7 @@ const DEFAULT_WZ = {
   goal: 100000,
 };
 
-const LS = "migdal-smart-savings-v1";
+const LS = "migdal-smart-savings-v2";
 function load() {
   try { return JSON.parse(localStorage.getItem(LS)) || {}; } catch (e) { return {}; }
 }

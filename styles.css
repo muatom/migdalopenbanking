@@ -511,3 +511,14 @@ img { display: block; }
   .stage { flex-direction: column; gap: 24px; overflow-y: auto; }
   .stage-copy { max-width: 320px; }
 }
+
+/* ---------- Opportunity rule params (income / cashflow / ceiling) ---------- */
+.rule-or { display: flex; align-items: center; gap: 12px; margin: 8px 2px 2px; }
+.rule-or::before, .rule-or::after { content: ""; flex: 1; height: 1px; background: var(--mig-line); }
+.rule-or span { font-size: 13px; font-weight: 800; color: var(--mig-slate-400); white-space: nowrap; }
+.rule-or.sm { margin: 2px 2px; }
+.rule-or.sm span { font-size: 12px; }
+.rule-params { border-right: 2px solid var(--mig-line); margin: 4px 14px 12px; padding-right: 6px; }
+.rule-field { padding: 8px 14px 2px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.rule-field .ar-txt b { font-size: 15px; }
+.rule-field .ar-txt p { font-size: 13px; margin: 2px 0 0; }

@@ -134,61 +134,68 @@ function MWizFloor({ wz, upd }) {
 
 /* ---- Sub 1: Opportunity rules ---- */
 const M_RULE_DEFS = [
-  { id: "cashflow", icon: "percent", hero: true, t: "% מהתזרים החיובי", d: "בסוף החודש, אחרי הכנסות פחות הוצאות — מפקידים אחוז ממה שבאמת נשאר." },
-  { id: "ceiling", icon: "scale", hero: true, t: "תקרת הוצאות חודשית", d: "מתחייבים לתקרת הוצאה. הוצאת פחות מהתקרה? ההפרש עובר לחיסכון." },
-  { id: "fixed", icon: "calendar", hero: false, t: "סכום קבוע", d: "סכום נוסף בתאריך קבוע בחודש, מעבר לרצפה." },
-  { id: "salary", icon: "zap", hero: false, t: "טריגר משכורת", d: "ברגע שהמשכורת נכנסת — סוויפ של אחוז או סכום מיד." },
+  { id: "income", icon: "coins", t: "אחוז מכל הכנסה לחשבון", d: "אחוז מכל תנועה לזכות — לא רק משכורת. נפקיד רק אם הסכום עובר את מינימום ההפקדה." },
+  { id: "cashflow", icon: "percent", t: "אחוז מהתזרים החיובי", d: "בסוף החודש, אחרי הכנסות פחות הוצאות — אחוז ממה שבאמת נשאר.", monthly: true },
+  { id: "ceiling", icon: "scale", t: "תקרת הוצאה חודשית", d: "מתחייבים לתקרת הוצאה. הוצאת פחות מהתקרה? ההפרש עובר לחיסכון.", monthly: true },
 ];
 function MWizRules({ wz, upd }) {
   const sel = wz.rules;
-  const count = Object.values(sel).filter((r) => r.on).length;
   function toggle(id) {
     const cur = sel[id];
-    if (!cur.on && count >= 3) return;
-    upd({ rules: { ...sel, [id]: { ...cur, on: !cur.on } } });
+    const on = !cur.on;
+    const next = { ...sel, [id]: { ...cur, on } };
+    if (on && (id === "cashflow" || id === "ceiling")) {
+      const other = id === "cashflow" ? "ceiling" : "cashflow"; // monthly rules mutually exclusive
+      next[other] = { ...sel[other], on: false };
+    }
+    upd({ rules: next });
   }
-  function setParam(id, key, v) { upd({ rules: { ...sel, [id]: { ...sel[id], [key]: v } } }); }
+  const setP = (id, key, v) => upd({ rules: { ...sel, [id]: { ...sel[id], [key]: v } } });
+  const money = (id, key, label, sub) => (
+    <div className="m-capfield">
+      <span className="pl">{label}{sub && <em>{sub}</em>}</span>
+      <div className="fld"><input type="text" value={"₪" + mnf(sel[id][key])}
+        onChange={(e) => setP(id, key, Number(e.target.value.replace(/[^\d]/g, "")) || 0)} /></div>
+    </div>
+  );
+  const pct = (id, label) => (
+    <div className="m-rule-param">
+      <div className="pl">{label}: {sel[id].pct}%</div>
+      <input className="m-slider" type="range" min="5" max="50" step="5" value={sel[id].pct}
+        style={{ "--fill": ((sel[id].pct - 5) / 45 * 100) + "%" }}
+        onChange={(e) => setP(id, "pct", Number(e.target.value))} />
+    </div>
+  );
   return (
     <div className="m-q">
-      <div className="qh">ואיך נזהה חודש חזק במיוחד?</div>
-      <div className="qs">בחר עד 3 חוקים (מסוגים שונים) שיזהו הזדמנות להפקיד עוד. בחודש חזק נשלח אליך בקשת אישור — אתה תמיד מחליט.</div>
+      <div className="qh">ואיך נזהה הזדמנות / חודש חזק?</div>
+      <div className="qs">״אחוז מכל הכנסה״ יכול לפעול לבד או יחד עם אחד מחוקי החודש. בין ״אחוז מהתזרים״ ל״תקרת הוצאה״ בוחרים <b>אחד מהשניים</b>, כדי לא ליצור שתי הפקדות חודשיות מקבילות. לכל חוק אפשר לקבוע תקרת מקסימום.</div>
       <div className="m-rules">
         {M_RULE_DEFS.map((r) => {
           const on = sel[r.id].on;
           return (
-            <div key={r.id}>
+            <React.Fragment key={r.id}>
+              {r.id === "cashflow" && <div className="m-rule-or"><span>או — אחד מחוקי החודש</span></div>}
+              {r.id === "ceiling" && <div className="m-rule-or"><span>או</span></div>}
               <div className={"m-rule" + (on ? " sel" : "")} onClick={() => toggle(r.id)}>
                 <span className="r-ic"><Icon name={r.icon} /></span>
                 <div style={{ flex: 1 }}>
-                  <div className="r-t">{r.t}{r.hero && <span className="hero-badge">מומלץ</span>}</div>
+                  <div className="r-t">{r.t}</div>
                   <div className="r-d">{r.d}</div>
                 </div>
                 <span className="r-check"><Icon name="check" /></span>
               </div>
-              {on && r.id === "cashflow" && (
-                <div className="m-rule-param">
-                  <div className="pl">אחוז מהתזרים: {sel.cashflow.pct}%</div>
-                  <input className="m-slider" type="range" min="5" max="50" step="5" value={sel.cashflow.pct}
-                    style={{ "--fill": ((sel.cashflow.pct - 5) / 45 * 100) + "%" }}
-                    onChange={(e) => setParam("cashflow", "pct", Number(e.target.value))} />
+              {on && (
+                <div className="m-rule-params">
+                  {(r.id === "income" || r.id === "cashflow") && pct(r.id, r.id === "income" ? "אחוז מכל הכנסה" : "אחוז מהתזרים")}
+                  {r.id === "income" && money("income", "min", "מינימום הפקדה", "נפקיד רק אם הסכום עובר את הרף.")}
+                  {r.id === "ceiling" && money("ceiling", "cap", "תקרת הוצאה חודשית")}
+                  {money(r.id, "max", "תקרת מקסימום להפקדה", "לא יופקד יותר מהסכום הזה דרך החוק.")}
                 </div>
               )}
-              {on && r.id === "ceiling" && (
-                <div className="m-rule-cap">
-                  <span className="pl">תקרת הוצאה חודשית</span>
-                  <div className="m-guard gr-field" style={{ padding: 0, border: "none", display: "block" }}>
-                    <div className="gr-field"><input type="text" value={"₪" + mnf(sel.ceiling.cap)}
-                      onChange={(e) => setParam("ceiling", "cap", Number(e.target.value.replace(/[^\d]/g, "")) || 0)} /></div>
-                  </div>
-                </div>
-              )}
-            </div>
+            </React.Fragment>
           );
         })}
-      </div>
-      <div className="m-count">
-        <span>{count} מתוך 3 חוקים נבחרו</span>
-        <span className="ok"><Icon name="info" /> רק מסוגים שונים</span>
       </div>
     </div>
   );
