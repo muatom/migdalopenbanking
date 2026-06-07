@@ -48,8 +48,8 @@ function WizFloor({ wz, upd }) {
       </div>
       <AmountStepper value={wz.floor} set={(v) => upd({ floor: v })} step={50} min={0} max={3000} />
       <div className="spillover-note" style={{ marginTop: 24 }}>
-        <Icon name="shield-check" />
-        <div><b>תמיד מוגן.</b><p>אם יתרת העו״ש תרד מתחת לרצפת היתרה שתגדיר בהמשך — נדלג על החודש. לעולם לא ניגע בכסף שאתה צריך.</p></div>
+        <Icon name="refresh" />
+        <div><b>הפקדה קבועה, בכל חודש.</b><p>הרצפה מתבצעת בכל מקרה — סכום חודשי קבוע שאתה קובע, ללא תלות במצב החשבון. ההגנות לפי יתרת העו״ש חלות על הפקדות ההזדמנות הגדולות יותר, שתגדיר בהמשך.</p></div>
       </div>
     </div>
   );
@@ -160,7 +160,7 @@ function WizAllocation({ wz, upd }) {
         <div className="qh">איך לאשר כל הפקדה?</div>
         <div className="qs">בוחרים לכל שכבה בנפרד. הרצפה לרוב באוטופיילוט; ההזדמנות לרוב באישור — כדי שתישאר בשליטה ברגעים הגדולים.</div>
         <div className="approve-row">
-          <div className="ar-txt"><b>הרצפה (₪{nf(wz.floor)} בחודש)</b><p>הפקדה קבועה, מתבצעת לבד בתוך הגארדריילים.</p></div>
+          <div className="ar-txt"><b>הרצפה (₪{nf(wz.floor)} בחודש)</b><p>הפקדה קבועה שמתבצעת בכל חודש, ללא תלות במצב החשבון.</p></div>
           <div className="seg green">
             <button className={ap.floor === "auto" ? "on" : ""} onClick={() => upd({ approval: { ...ap, floor: "auto" } })}>אוטופיילוט</button>
             <button className={ap.floor === "r2p" ? "on" : ""} onClick={() => upd({ approval: { ...ap, floor: "r2p" } })}>באישור</button>
@@ -180,7 +180,7 @@ function WizAllocation({ wz, upd }) {
         <div className="qh">גארדריילים — הביטחון שלך</div>
         <div className="qs">מומלץ להשאיר דלוקים. אלה הגבולות ששומרים על ״בלי לפגוע ברמת החיים״.</div>
         <div className="guard-row">
-          <div className="ar-txt"><b>רצפת יתרה בעו״ש</b><p>מתחת לסכום הזה — לא ניגע בכלום החודש.</p></div>
+          <div className="ar-txt"><b>רצפת יתרה בעו״ש</b><p>מתחת לסכום הזה — לא נבצע הפקדות הזדמנות נוספות החודש. הרצפה תמיד מתבצעת.</p></div>
           <div className="guard-field"><input type="text" value={"₪" + nf(g.balanceFloor)}
             onChange={(e) => upd({ guard: { ...g, balanceFloor: Number(e.target.value.replace(/[^\d]/g, "")) || 0 } })} /></div>
         </div>
