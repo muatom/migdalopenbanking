@@ -88,13 +88,24 @@ function App() {
   const [pushApproved, setPushApproved] = useState(saved.pushApproved || false);
   const [paused, setPaused] = useState(saved.paused || false);
   const [wz, setWz] = useState(saved.wz || DEFAULT_WZ);
-  const [toast, setToast] = useState(false);
+  const [instant, setInstant] = useState(saved.instant || []);
+  const [toast, setToast] = useState("");
+  const [depositOpen, setDepositOpen] = useState(false);
+  const [depositCtx, setDepositCtx] = useState(null);
   const viewRef = useRef(null);
 
   // persist
   useEffect(() => {
-    localStorage.setItem(LS, JSON.stringify({ step, activated, bank, pushApproved, paused, wz }));
-  }, [step, activated, bank, pushApproved, paused, wz]);
+    localStorage.setItem(LS, JSON.stringify({ step, activated, bank, pushApproved, paused, wz, instant }));
+  }, [step, activated, bank, pushApproved, paused, wz, instant]);
+
+  function openDeposit(ctx) { setDepositCtx(ctx || null); setDepositOpen(true); }
+  function showToast(msg) { setToast(msg); setTimeout(() => setToast(""), 3600); }
+  function onDepositDone(rec) {
+    setInstant((p) => [{ amt: rec.amt, dest: rec.dest, d: "היום" }, ...p]);
+    setDepositOpen(false);
+    showToast("₪" + nf(rec.amt) + " הופקדו · " + rec.dest + " · הטראקר עודכן");
+  }
 
   function go(n) {
     if (n === 7) setActivated(true);
@@ -105,26 +116,25 @@ function App() {
 
   function onApprove() {
     setPushApproved(true);
-    setToast(true);
-    setTimeout(() => setToast(false), 3600);
+    showToast("₪1,500 הופקדו לקופת הגמל להשקעה · הטראקר עודכן");
   }
 
   function reset() {
-    setStep(0); setActivated(false); setBank(null); setPushApproved(false); setPaused(false); setWz(DEFAULT_WZ);
+    setStep(0); setActivated(false); setBank(null); setPushApproved(false); setPaused(false); setWz(DEFAULT_WZ); setInstant([]);
   }
 
   function renderScreen() {
     switch (step) {
-      case 0: return <HomeScreen go={go} activated={activated} surplus={2300} />;
+      case 0: return <HomeScreen go={go} activated={activated} surplus={2300} openDeposit={openDeposit} />;
       case 1: return <EducationScreen go={go} />;
       case 2: return <ConnectScreen go={go} setBank={setBank} />;
       case 3: case 4: case 5: case 6:
         return <WizardScreen step={step} go={go} wz={wz} upd={upd} bank={bank} />;
       case 7: return <ConfirmScreen go={go} wz={wz} bank={bank} />;
-      case 8: return <Dashboard go={go} wz={wz} pushApproved={pushApproved} paused={paused} setPaused={setPaused} />;
+      case 8: return <Dashboard go={go} wz={wz} pushApproved={pushApproved} paused={paused} setPaused={setPaused} instant={instant} openDeposit={openDeposit} />;
       case 9: return (
         <React.Fragment>
-          <Dashboard go={go} wz={wz} pushApproved={pushApproved} paused={paused} setPaused={setPaused} />
+          <Dashboard go={go} wz={wz} pushApproved={pushApproved} paused={paused} setPaused={setPaused} instant={instant} openDeposit={openDeposit} />
           <StrongMonth go={go} onApprove={onApprove} bank={bank} />
         </React.Fragment>
       );
@@ -141,10 +151,11 @@ function App() {
           <div style={{ width: 54 }}></div>
         </div>
         <div className="browser-view" ref={viewRef}>
-          {toast && <div className="toast"><Icon name="check" /> ₪1,500 הופקדו לקופת הגמל להשקעה · הטראקר עודכן</div>}
+          {toast && <div className="toast"><Icon name="check" /> {toast}</div>}
           <Header onHome={() => go(0)} />
           <SubNav active="המוצרים שלי" />
           {renderScreen()}
+          <InstantDeposit open={depositOpen} ctx={depositCtx} wz={wz} bank={bank} onClose={() => setDepositOpen(false)} onDone={onDepositDone} />
         </div>
       </div>
 

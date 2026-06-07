@@ -549,3 +549,26 @@
 .m-capfield .pl em { display: block; font-style: normal; font-weight: 500; font-size: 11px; color: var(--mig-slate-400); margin-top: 2px; }
 .m-capfield .fld { border: 1.5px solid var(--mig-line); border-radius: 12px; padding: 9px 12px; min-width: 96px; flex: none; }
 .m-capfield .fld input { width: 100%; border: none; outline: none; font-family: var(--font-display); font-weight: 800; font-size: 16px; color: var(--mig-ink); text-align: center; background: none; }
+
+/* ---------- Instant deposit (mobile) ---------- */
+.m-depnow { display: inline-flex; align-items: center; gap: 5px; background: var(--mig-green); color: var(--mig-ink); font-weight: 800; font-size: 13px; padding: 9px 13px; border-radius: 99px; border: none; cursor: pointer; }
+.m-depnow svg { width: 15px; height: 15px; }
+.m-dashbtns { display: flex; gap: 8px; align-items: center; flex: none; }
+.m-rowdep { display: inline-flex; align-items: center; gap: 5px; margin-top: 8px; background: rgba(162,235,154,.22); color: var(--success); font-weight: 800; font-size: 12.5px; padding: 7px 12px; border-radius: 99px; border: none; cursor: pointer; }
+.m-rowdep svg { width: 14px; height: 14px; }
+.m-dep .di.instant { background: rgba(61,101,227,.1); color: var(--mig-blue); }
+.m-dep .dm .tag.instant { background: rgba(61,101,227,.1); color: var(--mig-blue); }
+.m-deposit { position: absolute; inset: 0; z-index: 130; display: flex; flex-direction: column; justify-content: flex-end; }
+.m-deposit-scrim { position: absolute; inset: 0; background: rgba(2,1,64,.5); -webkit-backdrop-filter: blur(2px); backdrop-filter: blur(2px); }
+.m-sheet2 { position: relative; background: #fff; border-radius: 24px 24px 0 0; max-height: 94%; overflow-y: auto; box-shadow: 0 -12px 40px rgba(2,1,64,.3); animation: m-slideup .35s cubic-bezier(.22,1,.36,1); }
+.m-sheet2 .sh2-grip { width: 40px; height: 5px; border-radius: 99px; background: var(--mig-line); margin: 10px auto 2px; }
+.m-sheet2 .sh2-head { display: flex; align-items: center; justify-content: space-between; padding: 6px 18px 12px; border-bottom: 1px solid var(--mig-line-soft); }
+.m-sheet2 .sh2-title { display: flex; align-items: center; gap: 8px; font-family: var(--font-display); font-weight: 800; font-size: 17px; color: var(--mig-ink); }
+.m-sheet2 .sh2-title svg { width: 18px; height: 18px; color: var(--success); }
+.m-sheet2 .sh2-x { color: var(--mig-slate-400); cursor: pointer; display: flex; }
+.m-sheet2 .sh2-x svg { width: 20px; height: 20px; }
+.m-sheet2 .sh2-body { padding: 16px 18px 24px; }
+.m-preset-row { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-bottom: 14px; }
+.m-preset { border: 1.5px solid var(--mig-line); background: #fff; color: var(--mig-ink); font-weight: 800; font-size: 13px; padding: 8px 13px; border-radius: 99px; cursor: pointer; }
+.m-preset.on { background: var(--mig-blue); color: #fff; border-color: var(--mig-blue); }
+.m-dep-alloc { border-top: 1px solid var(--mig-line-soft); padding-top: 4px; margin-top: 4px; }

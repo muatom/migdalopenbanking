@@ -5,7 +5,7 @@ const nf = (n) => Number(n).toLocaleString("en-US");
 /* ============================================================
    SCREEN 0 — Portal home with discovery banner
    ============================================================ */
-function HomeScreen({ go, activated, surplus }) {
+function HomeScreen({ go, activated, surplus, openDeposit }) {
   const tiles = [
     { t: "התביעות שלי", icon: "gavel" },
     { t: "הבקשות שלי", icon: "route" },
@@ -62,13 +62,19 @@ function HomeScreen({ go, activated, surplus }) {
             <h3>גמל להשקעה</h3>
             <div className="bal">יתרת כספים עדכנית: <b>₪{nf(159455)}</b></div>
             {activated && <div className="suggested" style={{marginTop:14}}><Icon name="check" /> חיסכון חכם פעיל</div>}
-            <button className="cta-fill" onClick={() => activated ? go(8) : go(1)}>לפרטי החשבון</button>
+            <div className="pcard-cta">
+              <button className="cta-fill" onClick={() => activated ? go(8) : go(1)}>לפרטי החשבון</button>
+              <button className="card-dep" onClick={() => openDeposit && openDeposit({ dest: "גמל" })}><Icon name="zap" /> הפקד עכשיו</button>
+            </div>
           </div>
           <div className="pcard">
             <h3>פוליסת חיסכון</h3>
             <div className="bal">יתרת כספים עדכנית: <b>₪{nf(88120)}</b></div>
             {activated && <div className="suggested" style={{marginTop:14}}><Icon name="check" /> חיסכון חכם פעיל</div>}
-            <button className="cta-out" onClick={() => activated ? go(8) : go(1)}>לפרטי החשבון</button>
+            <div className="pcard-cta">
+              <button className="cta-out" onClick={() => activated ? go(8) : go(1)}>לפרטי החשבון</button>
+              <button className="card-dep" onClick={() => openDeposit && openDeposit({ dest: "פוליסה" })}><Icon name="zap" /> הפקד עכשיו</button>
+            </div>
           </div>
         </div>
       </div>

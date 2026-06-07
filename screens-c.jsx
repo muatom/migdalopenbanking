@@ -31,9 +31,11 @@ function ConfirmScreen({ go, wz, bank }) {
 /* ============================================================
    SCREEN 8 — Dashboard (steady state)
    ============================================================ */
-function Dashboard({ go, wz, pushApproved, paused, setPaused }) {
+function Dashboard({ go, wz, pushApproved, paused, setPaused, instant, openDeposit }) {
+  const inst = instant || [];
+  const instTotal = inst.reduce((s, x) => s + x.amt, 0);
   const baseSaved = 32500;
-  const saved = baseSaved + (pushApproved ? 1500 : 0);
+  const saved = baseSaved + (pushApproved ? 1500 : 0) + instTotal;
   const pct = Math.min(100, Math.round(saved / wz.goal * 100));
   const [animPct, setAnimPct] = useStateC(0);
   useEffectC(() => { const t = setTimeout(() => setAnimPct(pct), 200); return () => clearTimeout(t); }, [pct]);
@@ -44,9 +46,13 @@ function Dashboard({ go, wz, pushApproved, paused, setPaused }) {
     { d: "18/04/2026", t: "הזדמנות · חודש חזק", amt: 1200, kind: "opp", dest: "קופת גמל להשקעה" },
     { d: "01/04/2026", t: "רצפה חודשית", amt: 500, kind: "auto", dest: "פוליסת חיסכון" },
   ];
-  const deps = pushApproved
-    ? [{ d: "05/06/2026", t: "הזדמנות · חודש חזק", amt: 1500, kind: "opp", dest: "קופת גמל להשקעה" }, ...baseDeps]
-    : baseDeps;
+  const instDeps = inst.map((x) => ({ d: x.d || "היום", t: "הפקדה מיידית", amt: x.amt, kind: "instant", dest: x.dest }));
+  const deps = [
+    ...instDeps,
+    ...(pushApproved ? [{ d: "05/06/2026", t: "הזדמנות · חודש חזק", amt: 1500, kind: "opp", dest: "קופת גמל להשקעה" }] : []),
+    ...baseDeps,
+  ];
+  const monthDeposited = 500 + (pushApproved ? 1500 : 0) + instTotal;
 
   const activeRules = RULE_DEFS.filter((r) => wz.rules[r.id].on);
 
@@ -63,6 +69,9 @@ function Dashboard({ go, wz, pushApproved, paused, setPaused }) {
               {!paused && <span> · מחובר ל{ "בנק ראשון" }</span>}</p>
           </div>
           <div className="dh-r">
+            <button className="depnow" onClick={() => openDeposit && openDeposit(null)}>
+              <Icon name="zap" /> הפקד עכשיו
+            </button>
             <button className="pausebtn" onClick={() => setPaused(!paused)}>
               <Icon name={paused ? "play" : "pause"} /> {paused ? "המשך הכל" : "עצור הכל"}
             </button>
@@ -96,7 +105,7 @@ function Dashboard({ go, wz, pushApproved, paused, setPaused }) {
           </div>
           <div className="dtile navy">
             <div className="dl"><Icon name="banknote" /> הופקד החודש</div>
-            <div><div className="dn"><small>₪</small>{nf(pushApproved ? 2000 : 500)}</div><div className="dsub">{pushApproved ? "רצפה ₪500 + הזדמנות ₪1,500" : "רצפה — אוטופיילוט"}</div></div>
+            <div><div className="dn"><small>₪</small>{nf(monthDeposited)}</div><div className="dsub">{["רצפה ₪500", pushApproved ? "הזדמנות ₪1,500" : null, instTotal ? "מיידית ₪" + nf(instTotal) : null].filter(Boolean).join(" + ")}</div></div>
           </div>
           <div className="dtile green">
             <div className="dl"><Icon name="coins" /> נחסך עד היום</div>
@@ -124,11 +133,11 @@ function Dashboard({ go, wz, pushApproved, paused, setPaused }) {
             <div className="ph"><h3>ההפקדות שלי</h3><a className="lnk">הכל ›</a></div>
             {deps.map((x, i) => (
               <div className="dep" key={i}>
-                <span className={"di " + (x.kind === "opp" ? "opp" : "auto")}><Icon name={x.kind === "opp" ? "zap" : "refresh"} /></span>
+                <span className={"di " + x.kind}><Icon name={x.kind === "opp" ? "zap" : x.kind === "instant" ? "banknote" : "refresh"} /></span>
                 <div className="dmid">
                   <b>{x.t}</b>
                   <small>{x.d} · {x.dest}</small>
-                  <div><span className={"tag " + x.kind}>{x.kind === "opp" ? "אושר באפליקציית הבנק" : "אוטופיילוט"}</span></div>
+                  <div><span className={"tag " + x.kind}>{x.kind === "opp" ? "אושר באפליקציית הבנק" : x.kind === "instant" ? "אושר באפליקציית הבנק · מיידי" : "אוטופיילוט"}</span></div>
                 </div>
                 <div className="damt">₪{nf(x.amt)}</div>
               </div>
@@ -252,4 +261,108 @@ function StrongMonth({ go, onApprove, bank }) {
   );
 }
 
-Object.assign(window, { ConfirmScreen, Dashboard, StrongMonth });
+/* ============================================================
+   INSTANT DEPOSIT — on-demand one-off deposit (R2P via bank app)
+   ============================================================ */
+function InstantDeposit({ open, onClose, onDone, wz, bank, ctx }) {
+  const presetDest = ctx && ctx.dest;
+  const initAlloc = () => presetDest === "פוליסה" ? { gemel: 0, policy: 100 }
+    : presetDest === "גמל" ? { gemel: 100, policy: 0 }
+    : { gemel: wz.alloc.gemel, policy: wz.alloc.policy };
+  const [phase, setPhase] = useStateC("form");
+  const [amt, setAmt] = useStateC(1000);
+  const [alloc, setAlloc] = useStateC(initAlloc);
+  useEffectC(() => { if (open) { setPhase("form"); setAmt(1000); setAlloc(initAlloc()); } }, [open, presetDest]);
+  if (!open) return null;
+  const total = alloc.gemel + alloc.policy;
+  const bankColor = (bank && bank.c) || "#6a1b9a";
+  const bankName = (bank && bank.n) || "בנק ראשון";
+  const bankMono = (bank && bank.m) || "ר";
+  const destText = alloc.policy === 100 ? "פוליסת חיסכון" : alloc.gemel === 100 ? "קופת גמל להשקעה" : alloc.gemel + "% גמל · " + alloc.policy + "% פוליסה";
+  function setA(key, v) {
+    const x = Math.max(0, Math.min(100, isNaN(v) ? 0 : v));
+    setAlloc(key === "gemel" ? { gemel: x, policy: 100 - x } : { policy: x, gemel: 100 - x });
+  }
+  function approve() { setPhase("done"); setTimeout(() => onDone({ amt, dest: destText }), 1700); }
+  return (
+    <div className="of-scrim" onClick={(e) => { if (e.target === e.currentTarget && phase === "form") onClose(); }}>
+      <div className="of-modal">
+        <div className="of-head">
+          <div className="of-brand"><Icon name="zap" style={{ width: 20, height: 20, color: "var(--mig-green)" }} /> הפקדה עכשיו</div>
+          <div className="of-brand"><span onClick={onClose} style={{ cursor: "pointer", display: "flex" }}><Icon name="x" style={{ width: 18, height: 18 }} /></span></div>
+        </div>
+
+        {phase === "form" && (
+          <div className="of-body">
+            <h3>כמה תרצה להפקיד עכשיו?</h3>
+            <p className="p">הפקדה חד-פעמית מיידית לחיסכון שלך במגדל.</p>
+            <div className="amount" style={{ margin: "4px 0 14px" }}>
+              <button onClick={() => setAmt((a) => Math.min(50000, a + 100))}><Icon name="plus" style={{ width: 22, height: 22 }} /></button>
+              <div className="val"><small>₪</small>{nf(amt)}</div>
+              <button onClick={() => setAmt((a) => Math.max(50, a - 100))}><Icon name="minus" style={{ width: 22, height: 22 }} /></button>
+            </div>
+            <div className="preset-row">
+              {[500, 1000, 2300].map((p) => (
+                <button key={p} className={"preset" + (amt === p ? " on" : "")} onClick={() => setAmt(p)}>₪{nf(p)}{p === 2300 ? " · כל העודף" : ""}</button>
+              ))}
+            </div>
+            <div className="dep-alloc">
+              <div className="alloc-row">
+                <span className="ai"><Icon name="trending-up" /></span>
+                <div className="an"><b>קופת גמל להשקעה</b><small>45067618</small></div>
+                <div className="alloc-pct"><input type="number" value={alloc.gemel} onChange={(e) => setA("gemel", Number(e.target.value))} /><span className="pc">%</span></div>
+              </div>
+              <div className="alloc-row">
+                <span className="ai"><Icon name="shield" /></span>
+                <div className="an"><b>פוליסת חיסכון</b><small>POL-22841</small></div>
+                <div className="alloc-pct"><input type="number" value={alloc.policy} onChange={(e) => setA("policy", Number(e.target.value))} /><span className="pc">%</span></div>
+              </div>
+              <div className="alloc-total">
+                <span>סך הקצאה</span>
+                {total === 100 ? <span className="ok"><Icon name="check" style={{ width: 18, height: 18 }} /> {total}%</span> : <span className="bad">{total}% — צריך 100%</span>}
+              </div>
+            </div>
+            <button className="btn btn-green btn-block btn-lg" style={{ marginTop: 16 }} disabled={total !== 100 || amt < 50} onClick={() => setPhase("bank")}>
+              המשך לאישור בבנק <Icon name="arrow-left" />
+            </button>
+          </div>
+        )}
+
+        {phase === "bank" && (
+          <div className="of-body">
+            <div className="push-card" style={{ boxShadow: "none", border: "1px solid var(--mig-line-soft)" }}>
+              <div className="pc-head" style={{ background: bankColor, color: "#fff", border: "none" }}>
+                <div className="src" style={{ color: "#fff" }}><span className="ml" style={{ background: "#fff", color: bankColor, fontFamily: "var(--font-display)", fontWeight: 800 }}>{bankMono}</span> {bankName}</div>
+                <Icon name="lock" style={{ width: 16, height: 16 }} />
+              </div>
+              <div className="pc-body">
+                <span className="r2p-tag">R2P · בקשת הפקדה מיידית</span>
+                <h4>אישור הפקדה למגדל</h4>
+                <div className="pamt"><small>₪</small>{nf(amt)}</div>
+                <div className="pmeta">מתוך העו״ש שלך · חד-פעמי</div>
+                <div className="pdest"><Icon name="trending-up" /> יעד: {destText}</div>
+              </div>
+              <div className="pc-actions">
+                <button className="approve" style={{ background: bankColor }} onClick={approve}>אישור והעברה</button>
+                <button className="decline" onClick={() => setPhase("form")}>חזרה</button>
+              </div>
+              <div className="push-secure" style={{ paddingBottom: 14 }}><Icon name="shield-check" /> האישור מתבצע באפליקציית הבנק · מאובטח</div>
+            </div>
+          </div>
+        )}
+
+        {phase === "done" && (
+          <div className="of-body">
+            <div className="of-redirect">
+              <div className="check" style={{ width: 84, height: 84, margin: "0 auto 18px", background: "var(--mig-green)", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center" }}><Icon name="check" style={{ width: 42, height: 42, color: "var(--mig-ink)" }} /></div>
+              <h3>ההפקדה בוצעה!</h3>
+              <p className="p">₪{nf(amt)} הופקדו · {destText}. הטראקר מתעדכן…</p>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+Object.assign(window, { ConfirmScreen, Dashboard, StrongMonth, InstantDeposit });

@@ -4,7 +4,7 @@ const { useState: useStateMA, useEffect: useEffectMA } = React;
 /* ============================================================
    SCREEN 0 — HOME (discovery)
    ============================================================ */
-function MHome({ go, activated }) {
+function MHome({ go, activated, openDeposit }) {
   return (
     <div className="m-scroll">
       {/* greeting */}
@@ -54,6 +54,7 @@ function MHome({ go, activated }) {
             <b>מגדל גמל להשקעה</b>
             <small>45067618</small>
             {activated && <div className="pr-active"><Icon name="check" /> חיסכון חכם פעיל</div>}
+            <button className="m-rowdep" onClick={(e) => { e.stopPropagation(); openDeposit && openDeposit({ dest: "גמל" }); }}><Icon name="zap" /> הפקד עכשיו</button>
           </div>
           <div className="pr-l"><span className="chev"><Icon name="chevron-left" /></span><small>₪</small>75,557</div>
         </div>
@@ -62,6 +63,7 @@ function MHome({ go, activated }) {
             <b>פוליסת חיסכון</b>
             <small>POL-22841</small>
             {activated && <div className="pr-active"><Icon name="check" /> חיסכון חכם פעיל</div>}
+            <button className="m-rowdep" onClick={(e) => { e.stopPropagation(); openDeposit && openDeposit({ dest: "פוליסה" }); }}><Icon name="zap" /> הפקד עכשיו</button>
           </div>
           <div className="pr-l"><span className="chev"><Icon name="chevron-left" /></span><small>₪</small>88,120</div>
         </div>

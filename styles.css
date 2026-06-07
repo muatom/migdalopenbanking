@@ -522,3 +522,20 @@ img { display: block; }
 .rule-field { padding: 8px 14px 2px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .rule-field .ar-txt b { font-size: 15px; }
 .rule-field .ar-txt p { font-size: 13px; margin: 2px 0 0; }
+
+/* ---------- Instant deposit (on-demand) ---------- */
+.depnow { background: var(--mig-green); color: var(--mig-ink); font-weight: 800; font-size: 14.5px; padding: 11px 18px; border-radius: 999px; display: flex; align-items: center; gap: 8px; }
+.depnow:hover { background: var(--mig-green-600); }
+.depnow svg { width: 17px; height: 17px; }
+.preset-row { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-bottom: 16px; }
+.preset { border: 1.6px solid var(--mig-line); background: #fff; color: var(--mig-ink); font-weight: 800; font-size: 14px; padding: 9px 16px; border-radius: 999px; cursor: pointer; }
+.preset:hover { border-color: var(--mig-blue); }
+.preset.on { background: var(--mig-blue); color: #fff; border-color: var(--mig-blue); }
+.dep-alloc { border-top: 1px solid var(--mig-line-soft); margin-top: 6px; }
+.dep .di.instant { background: rgba(61,101,227,.12); color: var(--mig-blue); }
+.dep .dmid .tag.instant { background: rgba(61,101,227,.12); color: var(--mig-blue); }
+.pcard-cta { display: flex; flex-direction: column; align-items: center; gap: 8px; margin-top: 22px; }
+.pcard-cta .cta-fill, .pcard-cta .cta-out { margin-top: 0; }
+.card-dep { display: inline-flex; align-items: center; gap: 7px; background: rgba(162,235,154,.22); color: var(--success); font-weight: 800; font-size: 14px; padding: 9px 18px; border-radius: 999px; }
+.card-dep:hover { background: rgba(162,235,154,.4); }
+.card-dep svg { width: 16px; height: 16px; }
