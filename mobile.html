@@ -64,6 +64,22 @@ const M_DEFAULT_WZ = {
 
 const M_LS = "migdal-smart-savings-mobile-v2";
 function mLoad() { try { return JSON.parse(localStorage.getItem(M_LS)) || {}; } catch (e) { return {}; } }
+function mMergeWz(s) {
+  if (!s) return M_DEFAULT_WZ;
+  const D = M_DEFAULT_WZ, r = s.rules || {};
+  return {
+    floor: s.floor != null ? s.floor : D.floor,
+    rules: {
+      income: { ...D.rules.income, ...(r.income || {}) },
+      cashflow: { ...D.rules.cashflow, ...(r.cashflow || {}) },
+      ceiling: { ...D.rules.ceiling, ...(r.ceiling || {}) },
+    },
+    alloc: { ...D.alloc, ...(s.alloc || {}) },
+    approval: { ...D.approval, ...(s.approval || {}) },
+    guard: { ...D.guard, ...(s.guard || {}) },
+    goal: s.goal !== undefined ? s.goal : D.goal,
+  };
+}
 
 function App() {
   const saved = mLoad();
@@ -71,25 +87,34 @@ function App() {
   const [activated, setActivated] = useStateApp(saved.activated || false);
   const [bank, setBank] = useStateApp(saved.bank || null);
   const [pushApproved, setPushApproved] = useStateApp(saved.pushApproved || false);
+  const [pushDeclined, setPushDeclined] = useStateApp(saved.pushDeclined || false);
+  const [oppAmt, setOppAmt] = useStateApp(saved.oppAmt || 1500);
   const [paused, setPaused] = useStateApp(saved.paused || false);
-  const [wz, setWz] = useStateApp(saved.wz || M_DEFAULT_WZ);
+  const [wz, setWz] = useStateApp(() => mMergeWz(saved.wz));
   const [instant, setInstant] = useStateApp(saved.instant || []);
   const [toast, setToast] = useStateApp("");
   const [depositOpen, setDepositOpen] = useStateApp(false);
   const [depositCtx, setDepositCtx] = useStateApp(null);
   const [scale, setScale] = useStateApp(1);
+  const toastTimer = React.useRef(null);
 
   useEffectApp(() => {
-    localStorage.setItem(M_LS, JSON.stringify({ step, activated, bank, pushApproved, paused, wz, instant }));
-  }, [step, activated, bank, pushApproved, paused, wz, instant]);
+    localStorage.setItem(M_LS, JSON.stringify({ step, activated, bank, pushApproved, pushDeclined, oppAmt, paused, wz, instant }));
+  }, [step, activated, bank, pushApproved, pushDeclined, oppAmt, paused, wz, instant]);
 
   function openDeposit(ctx) { setDepositCtx(ctx || null); setDepositOpen(true); }
-  function showToast(msg) { setToast(msg); setTimeout(() => setToast(""), 3600); }
+  function showToast(msg) { setToast(msg); clearTimeout(toastTimer.current); toastTimer.current = setTimeout(() => setToast(""), 3600); }
   function onDepositDone(rec) {
-    setInstant((p) => [{ amt: rec.amt, dest: rec.dest, d: "היום" }, ...p]);
+    setInstant((p) => [{ amt: rec.amt, dest: rec.dest, d: mTodayHe() }, ...p]);
     setDepositOpen(false);
     showToast("₪" + mnf(rec.amt) + " הופקדו · " + rec.dest);
   }
+  function reset() {
+    setStep(0); setActivated(false); setBank(null); setPushApproved(false); setPushDeclined(false); setOppAmt(1500); setPaused(false); setWz(M_DEFAULT_WZ); setInstant([]);
+    setDepositOpen(false); setDepositCtx(null);
+    try { localStorage.removeItem(M_LS); } catch (e) {}
+  }
+  function disconnect() { reset(); showToast("החיבור לבנק נותק. ההגדרות נשמרו לחיבור עתידי."); }
 
   // fit-to-viewport scaling
   useEffectApp(() => {
@@ -116,7 +141,8 @@ function App() {
 
   function onApprove() {
     setPushApproved(true);
-    showToast("₪1,500 הופקדו לקופת הגמל · הטראקר עודכן");
+    setPushDeclined(false);
+    showToast("₪" + mnf(oppAmt) + " הופקדו · " + mDestFromAlloc(wz.alloc));
   }
 
   // which screens show the persistent bottom tab nav (destinations, not flow)
@@ -127,12 +153,11 @@ function App() {
     switch (step) {
       case 0: return <MHome go={go} activated={activated} openDeposit={openDeposit} />;
       case 1: return <MEducation go={go} />;
-      case 2: return <MConnect go={go} setBank={setBank} />;
+      case 2: return <MConnect go={go} setBank={setBank} bank={bank} />;
       case 3: case 4: case 5: case 6:
         return <MWizard step={step} go={go} wz={wz} upd={upd} bank={bank} />;
       case 7: return <MConfirm go={go} wz={wz} bank={bank} />;
-      case 8: return <MDashboard go={go} wz={wz} pushApproved={pushApproved} paused={paused} setPaused={setPaused} instant={instant} openDeposit={openDeposit} />;
-      case 9: return <MDashboard go={go} wz={wz} pushApproved={pushApproved} paused={paused} setPaused={setPaused} instant={instant} openDeposit={openDeposit} />;
+      case 8: case 9: return <MDashboard go={go} wz={wz} pushApproved={pushApproved} paused={paused} setPaused={setPaused} instant={instant} openDeposit={openDeposit} bank={bank} disconnect={disconnect} pushDeclined={pushDeclined} setPushDeclined={setPushDeclined} oppAmt={oppAmt} setOppAmt={setOppAmt} />;
       default: return null;
     }
   }
@@ -150,8 +175,8 @@ function App() {
               {toast && <div className="m-toast"><Icon name="check" /> {toast}</div>}
               {renderScreen()}
               {showNav && <BottomNav />}
-              {step === 9 && <MStrongMonth go={go} onApprove={onApprove} bank={bank} />}
-              <MInstantDeposit open={depositOpen} ctx={depositCtx} wz={wz} bank={bank} onClose={() => setDepositOpen(false)} onDone={onDepositDone} />
+              {step === 9 && <MStrongMonth go={go} onApprove={onApprove} bank={bank} wz={wz} oppAmt={oppAmt} setPushDeclined={setPushDeclined} />}
+              <MInstantDeposit open={depositOpen} ctx={depositCtx} wz={wz} bank={bank} setBank={setBank} onClose={() => setDepositOpen(false)} onDone={onDepositDone} />
             </div>
           </div>
         </div>

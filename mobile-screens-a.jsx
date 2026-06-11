@@ -9,7 +9,7 @@ function MHome({ go, activated, openDeposit }) {
     <div className="m-scroll">
       {/* greeting */}
       <div className="m-greet" style={{ padding: "12px 22px 8px" }}>
-        <span style={{ fontSize: 15, color: "var(--mig-slate-600)", fontWeight: 600 }}>ערב טוב, דניאלה</span>
+        <span style={{ fontSize: 15, color: "var(--mig-slate-600)", fontWeight: 600 }}>ערב טוב, תום</span>
       </div>
 
       {/* navy balance hero — real-app feel */}
@@ -44,7 +44,6 @@ function MHome({ go, activated, openDeposit }) {
         <button className="pbtn" onClick={() => go(1)}>גלו את חיסכון חכם <Icon name="arrow-left" /></button>
         <button className="plater" onClick={() => go(1)}>איך זה עובד?</button>
       </div>
-      <p className="m-discnote">בהשקה — באנר בולט. לאחר מכן: פריט עדין בתפריט + טריגר נקודתי כשמזוהה הזדמנות.</p>
 
       {/* personal savings products */}
       <div className="m-sec-label">החיסכון האישי שלי</div>
@@ -56,12 +55,12 @@ function MHome({ go, activated, openDeposit }) {
             {activated && <div className="pr-active"><Icon name="check" /> חיסכון חכם פעיל</div>}
             <button className="m-rowdep" onClick={(e) => { e.stopPropagation(); openDeposit && openDeposit({ dest: "גמל" }); }}><Icon name="zap" /> הפקד עכשיו</button>
           </div>
-          <div className="pr-l"><span className="chev"><Icon name="chevron-left" /></span><small>₪</small>75,557</div>
+          <div className="pr-l"><span className="chev"><Icon name="chevron-left" /></span><small>₪</small>{mnf(159455)}</div>
         </div>
         <div className="m-prodrow" onClick={() => activated ? go(8) : go(1)}>
           <div className="pr-r">
             <b>פוליסת חיסכון</b>
-            <small>POL-22841</small>
+            <small>8225841</small>
             {activated && <div className="pr-active"><Icon name="check" /> חיסכון חכם פעיל</div>}
             <button className="m-rowdep" onClick={(e) => { e.stopPropagation(); openDeposit && openDeposit({ dest: "פוליסה" }); }}><Icon name="zap" /> הפקד עכשיו</button>
           </div>
@@ -80,9 +79,9 @@ function MGrowthChart() {
   const [grown, setGrown] = useStateMA(false);
   useEffectMA(() => { const t = setTimeout(() => setGrown(true), 280); return () => clearTimeout(t); }, []);
   const years = [
-    { y: "שנה 1", principal: 24, tax: 5, scn: 4, top: "₪9.5K" },
-    { y: "שנה 5", principal: 50, tax: 11, scn: 12, top: "₪58K" },
-    { y: "שנה 10", principal: 70, tax: 15, scn: 29, top: "₪138K" },
+    { y: "שנה 1", principal: 24, tax: 5, scn: 4, top: "₪9,500" },
+    { y: "שנה 5", principal: 50, tax: 11, scn: 12, top: "₪58,000" },
+    { y: "שנה 10", principal: 70, tax: 15, scn: 29, top: "₪138,000" },
   ];
   const maxTotal = Math.max(...years.map((b) => b.principal + b.tax + b.scn));
   const MAXH = 92;
@@ -114,7 +113,7 @@ function MEducation({ go }) {
   const trust = [
     { icon: "eye-off", t: "מגדל לא שומרת את נתוני הבנק", p: "הנתונים נשארים אצל ספק הבנקאות הפתוחה. אנחנו רואים רק את ההפקדות שביצענו." },
     { icon: "unlink", t: "אפשר לנתק בכל רגע", p: "השליטה תמיד אצלך. עצירה, עריכה וניתוק זמינים תמיד, בלחיצה אחת." },
-    { icon: "shield-check", t: "רק עודף אמיתי", p: "לעולם לא נעביר כסף שאתה עלול להזדקק לו החודש. רצפת יתרה מגינה עליך." },
+    { icon: "shield-check", t: "רק עודף אמיתי", p: "הפקדות ההזדמנות מוגנות ברצפת יתרה — לא נבצע הפקדה נוספת כשהעו״ש נמוך. הרצפה החודשית היא סכום קבוע שאתה קובע." },
   ];
   return (
     <div className="m-scroll">

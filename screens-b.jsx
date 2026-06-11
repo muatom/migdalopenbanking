@@ -77,7 +77,7 @@ function WizRules({ wz, upd }) {
   const money = (id, key, label, sub) => (
     <div className="rule-field">
       <span className="ar-txt"><b>{label}</b>{sub && <p>{sub}</p>}</span>
-      <div className="guard-field"><input type="text" value={"₪" + nf(sel[id][key])}
+      <div className="guard-field"><span className="cur">₪</span><input type="text" value={nf(sel[id][key])}
         onChange={(e) => setP(id, key, Number(e.target.value.replace(/[^\d]/g, "")) || 0)} /></div>
     </div>
   );
@@ -128,7 +128,10 @@ function WizRules({ wz, upd }) {
 function WizAllocation({ wz, upd }) {
   const a = wz.alloc;
   const total = a.gemel + a.policy;
-  function setA(key, v) { upd({ alloc: { ...a, [key]: Math.max(0, Math.min(100, v)) } }); }
+  function setA(key, v) {
+    const x = Math.max(0, Math.min(100, isNaN(v) ? 0 : v));
+    upd({ alloc: key === "gemel" ? { gemel: x, policy: 100 - x } : { policy: x, gemel: 100 - x } });
+  }
   const ap = wz.approval, g = wz.guard;
   return (
     <div>
@@ -146,7 +149,7 @@ function WizAllocation({ wz, upd }) {
         </div>
         <div className="alloc-row">
           <span className="ai"><Icon name="shield" /></span>
-          <div className="an"><b>פוליסת חיסכון</b><small>POL-22841</small></div>
+          <div className="an"><b>פוליסת חיסכון</b><small>8225841</small></div>
           <div className="alloc-pct">
             <input type="number" value={a.policy} onChange={(e) => setA("policy", Number(e.target.value))} />
             <span className="pc">%</span>
@@ -160,7 +163,7 @@ function WizAllocation({ wz, upd }) {
         </div>
         <div className="spillover-note">
           <Icon name="route" />
-          <div><b>Cap-aware Spillover.</b><p>קופת הגמל הגיעה לתקרה השנתית? החלק שלה יעבור אוטומטית לפוליסת החיסכון — המשך לחסוך בלי לעצור.</p></div>
+          <div><b>הגעת לתקרה? ממשיכים לחסוך.</b><p>קופת הגמל הגיעה לתקרה השנתית? החלק שלה יעבור אוטומטית לפוליסת החיסכון — בלי לעצור ובלי שתצטרך לעשות דבר.</p></div>
         </div>
       </div>
 
@@ -176,7 +179,7 @@ function WizAllocation({ wz, upd }) {
           </div>
         </div>
         <div className="approve-row">
-          <div className="ar-txt"><b>ההזדמנות (חודש חזק)</b><p>בקשת אישור (R2P) שתאשר באפליקציית הבנק שלך.</p></div>
+          <div className="ar-txt"><b>ההזדמנות (חודש חזק)</b><p>בקשת הפקדה שתאשר באפליקציית הבנק שלך.</p></div>
           <div className="seg">
             <button className={ap.opp === "auto" ? "on" : ""} onClick={() => upd({ approval: { ...ap, opp: "auto" } })}>אוטופיילוט</button>
             <button className={ap.opp === "r2p" ? "on" : ""} onClick={() => upd({ approval: { ...ap, opp: "r2p" } })}>באישור</button>
@@ -186,16 +189,16 @@ function WizAllocation({ wz, upd }) {
 
       {/* Guardrails */}
       <div className="card-q">
-        <div className="qh">גארדריילים — הביטחון שלך</div>
-        <div className="qs">מומלץ להשאיר דלוקים. אלה הגבולות ששומרים על ״בלי לפגוע ברמת החיים״.</div>
+        <div className="qh">מנגנוני הגנה — הביטחון שלך</div>
+        <div className="qs">מומלץ להשאיר דלוקים. אלה הגבולות ששומרים על ״בלי לפגוע ברמת החיים״ — והם חלים על הפקדות ההזדמנות.</div>
         <div className="guard-row">
           <div className="ar-txt"><b>רצפת יתרה בעו״ש</b><p>מתחת לסכום הזה — לא נבצע הפקדות הזדמנות נוספות החודש. הרצפה תמיד מתבצעת.</p></div>
-          <div className="guard-field"><input type="text" value={"₪" + nf(g.balanceFloor)}
+          <div className="guard-field"><span className="cur">₪</span><input type="text" value={nf(g.balanceFloor)}
             onChange={(e) => upd({ guard: { ...g, balanceFloor: Number(e.target.value.replace(/[^\d]/g, "")) || 0 } })} /></div>
         </div>
         <div className="guard-row">
-          <div className="ar-txt"><b>תקרה חודשית כוללת</b><p>סך מקסימלי שיופקד דרך הפיצ׳ר בחודש.</p></div>
-          <div className="guard-field"><input type="text" value={"₪" + nf(g.monthlyCap)}
+          <div className="ar-txt"><b>תקרה חודשית כוללת</b><p>סך מקסימלי שיופקד דרך השירות בחודש.</p></div>
+          <div className="guard-field"><span className="cur">₪</span><input type="text" value={nf(g.monthlyCap)}
             onChange={(e) => upd({ guard: { ...g, monthlyCap: Number(e.target.value.replace(/[^\d]/g, "")) || 0 } })} /></div>
         </div>
         <div className="guard-row">
@@ -208,29 +211,42 @@ function WizAllocation({ wz, upd }) {
 }
 
 /* ---------- Sub 3: Goal + Review ---------- */
-function WizGoal({ wz, upd, bank }) {
+function WizGoal({ wz, upd, bank, go }) {
   const activeRules = RULE_DEFS.filter((r) => wz.rules[r.id].on);
+  const edit = (n) => <span className="rev-edit" title="ערוך" onClick={() => go(n)}><Icon name="pencil" /></span>;
   return (
     <div>
       <div className="card-q">
         <div className="qh">יעד חיסכון (אופציונלי)</div>
         <div className="qs">הגדר יעד לקופת הגמל להשקעה, ונראה לך את ההתקדמות אליו — העודף הופך להתקדמות מוחשית.</div>
-        <div className="goal-amount"><div className="gv"><small>₪</small>{nf(wz.goal)}</div></div>
-        <input className="slider" type="range" min="20000" max="300000" step="10000" value={wz.goal}
-          style={{ "--fill": ((wz.goal - 20000) / 280000 * 100) + "%", marginTop: 18 }}
-          onChange={(e) => upd({ goal: Number(e.target.value) })} />
-        <div className="slider-ends"><span>₪20,000</span><span>₪300,000</span></div>
+        {wz.goal != null ? (
+          <React.Fragment>
+            <div className="goal-amount"><div className="gv"><small>₪</small>{nf(wz.goal)}</div></div>
+            <input className="slider" type="range" min="20000" max="300000" step="10000" value={wz.goal}
+              style={{ "--fill": ((wz.goal - 20000) / 280000 * 100) + "%", marginTop: 18 }}
+              onChange={(e) => upd({ goal: Number(e.target.value) })} />
+            <div className="slider-ends"><span>₪20,000</span><span>₪300,000</span></div>
+            <div className="center" style={{ marginTop: 14 }}>
+              <span className="muted-link" style={{ fontSize: 14 }} onClick={() => upd({ goal: null })}>דלג — בלי יעד בינתיים</span>
+            </div>
+          </React.Fragment>
+        ) : (
+          <div className="center" style={{ padding: "10px 0 4px" }}>
+            <p style={{ color: "var(--mig-slate-600)", fontSize: 15, margin: "0 0 14px" }}>בחרת להמשיך בלי יעד. אפשר להוסיף יעד בכל רגע מאזור החיסכון.</p>
+            <button className="btn btn-ghost" onClick={() => upd({ goal: 100000 })}>בעצם, קבע לי יעד</button>
+          </div>
+        )}
       </div>
 
       <div className="card-q">
         <div className="qh">סיכום לפני הפעלה</div>
         <div className="review">
-          <div className="rev-row"><span className="rl"><Icon name="banknote" /> רצפה חודשית</span><span className="rv">₪{nf(wz.floor)} <span className="sm">{wz.approval.floor === "auto" ? "אוטופיילוט" : "באישור"}</span></span></div>
-          <div className="rev-row"><span className="rl"><Icon name="sparkles" /> חוקי הזדמנות</span><span className="rv">{activeRules.length ? activeRules.map((r) => r.t).join(" · ") : "—"} <span className="sm">{wz.approval.opp === "auto" ? "אוטופיילוט" : "באישור (R2P)"}</span></span></div>
-          <div className="rev-row"><span className="rl"><Icon name="route" /> הקצאה</span><span className="rv">{wz.alloc.gemel}% גמל · {wz.alloc.policy}% פוליסה</span></div>
-          <div className="rev-row"><span className="rl"><Icon name="shield-check" /> גארדריילים</span><span className="rv">{wz.guard.on ? "פעילים" : "כבויים"} <span className="sm">רצפת יתרה ₪{nf(wz.guard.balanceFloor)} · תקרה ₪{nf(wz.guard.monthlyCap)}</span></span></div>
-          <div className="rev-row"><span className="rl"><Icon name="target" /> יעד</span><span className="rv">₪{nf(wz.goal)}</span></div>
-          <div className="rev-row"><span className="rl"><Icon name="link2" /> חשבון מחובר</span><span className="rv">{bank ? bank.n : "—"}</span></div>
+          <div className="rev-row"><span className="rl"><Icon name="banknote" /> רצפה חודשית</span><span className="rv">₪{nf(wz.floor)} <span className="sm">{wz.approval.floor === "auto" ? "אוטופיילוט" : "באישור"}</span></span>{edit(3)}</div>
+          <div className="rev-row"><span className="rl"><Icon name="sparkles" /> חוקי הזדמנות</span><span className="rv">{activeRules.length ? activeRules.map((r) => r.t).join(" · ") : "ללא חוקים — אפשר להוסיף בהמשך"} <span className="sm">{wz.approval.opp === "auto" ? "אוטופיילוט" : "באישור באפליקציית הבנק"}</span></span>{edit(4)}</div>
+          <div className="rev-row"><span className="rl"><Icon name="route" /> הקצאה</span><span className="rv">{wz.alloc.gemel}% גמל · {wz.alloc.policy}% פוליסה</span>{edit(5)}</div>
+          <div className="rev-row"><span className="rl"><Icon name="shield-check" /> מנגנוני הגנה</span><span className="rv">{wz.guard.on ? "פעילים" : "כבויים"} <span className="sm">רצפת יתרה ₪{nf(wz.guard.balanceFloor)} · תקרה ₪{nf(wz.guard.monthlyCap)}</span></span>{edit(5)}</div>
+          <div className="rev-row"><span className="rl"><Icon name="target" /> יעד</span><span className="rv">{wz.goal != null ? "₪" + nf(wz.goal) : "ללא יעד"}</span></div>
+          <div className="rev-row"><span className="rl"><Icon name="link2" /> חשבון מחובר</span><span className="rv">{bank ? bank.n : "—"}</span>{edit(2)}</div>
         </div>
       </div>
     </div>
@@ -239,6 +255,7 @@ function WizGoal({ wz, upd, bank }) {
 
 function WizardScreen({ step, go, wz, upd, bank }) {
   const sub = step - 3; // 0..3
+  const allocOk = wz.alloc.gemel + wz.alloc.policy === 100;
   return (
     <div>
       <Band crumbs={["דף הבית", "מגדל שלי", "חיסכון חכם", "הגדרה"]} title="חיסכון חכם" />
@@ -247,13 +264,13 @@ function WizardScreen({ step, go, wz, upd, bank }) {
         {sub === 0 && <WizFloor wz={wz} upd={upd} />}
         {sub === 1 && <WizRules wz={wz} upd={upd} />}
         {sub === 2 && <WizAllocation wz={wz} upd={upd} />}
-        {sub === 3 && <WizGoal wz={wz} upd={upd} bank={bank} />}
+        {sub === 3 && <WizGoal wz={wz} upd={upd} bank={bank} go={go} />}
       </div>
       <div className="wiz-foot" style={{ paddingBottom: 80 }}>
         <span className="back" onClick={() => go(step - 1)}><Icon name="chevron-right" /> חזרה</span>
         {sub < 3
-          ? <button className="btn btn-green" onClick={() => go(step + 1)}>המשך <Icon name="arrow-left" /></button>
-          : <button className="btn btn-green btn-lg" onClick={() => go(7)}>הפעל את חיסכון חכם <Icon name="check" /></button>}
+          ? <button className="btn btn-green" disabled={sub === 2 && !allocOk} onClick={() => go(step + 1)}>המשך <Icon name="arrow-left" /></button>
+          : <button className="btn btn-green btn-lg" disabled={!allocOk} onClick={() => go(7)}>הפעל את חיסכון חכם <Icon name="check" /></button>}
       </div>
     </div>
   );

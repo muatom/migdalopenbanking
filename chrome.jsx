@@ -50,6 +50,19 @@ const PATHS = {
   "pencil": <g><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></g>,
 };
 
+/* ---------- Shared demo helpers (dates, allocation destination) ---------- */
+const heDate = (d) => String(d.getDate()).padStart(2, "0") + "/" + String(d.getMonth() + 1).padStart(2, "0") + "/" + d.getFullYear();
+const todayHe = () => heDate(new Date());
+const monthFirst = (back) => { const t = new Date(); return heDate(new Date(t.getFullYear(), t.getMonth() - back, 1)); };
+const monthLastDay = (back) => { const t = new Date(); return heDate(new Date(t.getFullYear(), t.getMonth() - back + 1, 0)); };
+const monthDay = (back, day) => { const t = new Date(); return heDate(new Date(t.getFullYear(), t.getMonth() - back, day)); };
+const lastVisitHe = () => heDate(new Date(Date.now() - 4 * 864e5));
+const prevMonthName = () => new Date(new Date().getFullYear(), new Date().getMonth() - 1, 1).toLocaleDateString("he-IL", { month: "long" });
+const destFromAlloc = (a) => !a ? "קופת גמל להשקעה"
+  : a.gemel >= 100 ? "קופת גמל להשקעה"
+  : a.policy >= 100 ? "פוליסת חיסכון"
+  : a.gemel + "% גמל · " + a.policy + "% פוליסה";
+
 function Icon({ name, className, style }) {
   const p = PATHS[name];
   if (!p) return null;
@@ -70,7 +83,7 @@ function Header({ onHome }) {
   return (
     <header className="hdr">
       <div className="hdr-left">
-        <div className="hdr-pill">היום | <b>התנתק</b></div>
+        <div className="hdr-pill">שלום תום | <b>התנתק</b></div>
         <div className="hdr-lang">
           <a>עברית <Icon name="chevron-down" className="cv" /></a>
           <a>כניסה לפורטלים <Icon name="chevron-down" className="cv" /></a>
@@ -92,7 +105,7 @@ function SubNav({ active }) {
     <div className="subnav">
       <div className="subnav-note">
         <span className="bell"><Icon name="bell" /></span>
-        ביקורת לאחרונה 31/05/2026
+        ביקורך האחרון {lastVisitHe()}
       </div>
       <nav className="subnav-links">
         {SUBNAV.map((s) => <a key={s} className={s === active ? "active" : ""}>{s}</a>)}
@@ -120,4 +133,4 @@ function Band({ crumbs, title }) {
   );
 }
 
-Object.assign(window, { Icon, Header, SubNav, Band });
+Object.assign(window, { Icon, Header, SubNav, Band, heDate, todayHe, monthFirst, monthLastDay, monthDay, lastVisitHe, prevMonthName, destFromAlloc });

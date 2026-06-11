@@ -37,11 +37,9 @@ function HomeScreen({ go, activated, surplus, openDeposit }) {
             </div>
           </div>
         </div>
-        <p className="discover-note">בהשקה מוצג כבאנר בולט. לאחר מכן: פריט עדין בתפריט + טריגר נקודתי כשמזוהה הזדמנות.</p>
-
         <div className="hello">
           <h2>היי תום!</h2>
-          <p>ביקורך האחרון 31/05/2026</p>
+          <p>ביקורך האחרון {lastVisitHe()}</p>
         </div>
 
         <div className="tiles">
@@ -63,7 +61,7 @@ function HomeScreen({ go, activated, surplus, openDeposit }) {
             <div className="bal">יתרת כספים עדכנית: <b>₪{nf(159455)}</b></div>
             {activated && <div className="suggested" style={{marginTop:14}}><Icon name="check" /> חיסכון חכם פעיל</div>}
             <div className="pcard-cta">
-              <button className="cta-fill" onClick={() => activated ? go(8) : go(1)}>לפרטי החשבון</button>
+              <button className="cta-fill" onClick={() => activated ? go(8) : go(1)}>{activated ? "לחיסכון החכם שלי" : "לחיסכון חכם"}</button>
               <button className="card-dep" onClick={() => openDeposit && openDeposit({ dest: "גמל" })}><Icon name="zap" /> הפקד עכשיו</button>
             </div>
           </div>
@@ -72,7 +70,7 @@ function HomeScreen({ go, activated, surplus, openDeposit }) {
             <div className="bal">יתרת כספים עדכנית: <b>₪{nf(88120)}</b></div>
             {activated && <div className="suggested" style={{marginTop:14}}><Icon name="check" /> חיסכון חכם פעיל</div>}
             <div className="pcard-cta">
-              <button className="cta-out" onClick={() => activated ? go(8) : go(1)}>לפרטי החשבון</button>
+              <button className="cta-out" onClick={() => activated ? go(8) : go(1)}>{activated ? "לחיסכון החכם שלי" : "לחיסכון חכם"}</button>
               <button className="card-dep" onClick={() => openDeposit && openDeposit({ dest: "פוליסה" })}><Icon name="zap" /> הפקד עכשיו</button>
             </div>
           </div>
@@ -124,7 +122,7 @@ function EducationScreen({ go }) {
   const trust = [
     { icon: "eye-off", t: "מגדל לא שומרת את נתוני הבנק", p: "הנתונים נשארים אצל ספק הבנקאות הפתוחה. אנחנו רואים רק את ההפקדות שביצענו." },
     { icon: "unlink", t: "אפשר לנתק בכל רגע", p: "השליטה תמיד אצלך. עצירה, עריכה וניתוק זמינים תמיד, בלחיצה אחת." },
-    { icon: "shield-check", t: "רק עודף אמיתי", p: "לעולם לא נעביר כסף שאתה עלול להזדקק לו החודש. רצפת יתרה מגינה עליך." },
+    { icon: "shield-check", t: "רק עודף אמיתי", p: "הפקדות ההזדמנות מוגנות ברצפת יתרה — לא נבצע הפקדה נוספת כשהעו״ש נמוך. הרצפה החודשית היא סכום קבוע שאתה קובע." },
   ];
   return (
     <div>
@@ -193,15 +191,21 @@ const BANKS = [
   { n: "בנק שדרה", c: "#c62828", m: "ש" },
   { n: "בנק גליל", c: "#ef6c00", m: "ג" },
 ];
-function ConnectScreen({ go, setBank }) {
-  const [phase, setPhase] = useStateA("choose"); // choose | redirect | done
-  const [sel, setSel] = useStateA(null);
+function ConnectScreen({ go, setBank, bank }) {
+  // resume on "done" when a consent already exists (back-from-wizard shouldn't force a reconnect)
+  const [phase, setPhase] = useStateA(bank ? "done" : "choose"); // choose | redirect | error | done | unsupported | notify
+  const [sel, setSel] = useStateA(bank || null);
+  const [failedOnce, setFailedOnce] = useStateA(false);
 
   function choose(b) {
     setSel(b);
-    setBank(b);
     setPhase("redirect");
-    setTimeout(() => setPhase("done"), 2200);
+    // בנק גליל demos the failure path once (A9): first attempt errors, retry succeeds
+    if (b.n === "בנק גליל" && !failedOnce) {
+      setTimeout(() => { setFailedOnce(true); setPhase("error"); }, 2200);
+    } else {
+      setTimeout(() => { setBank(b); setPhase("done"); }, 2200);
+    }
   }
   return (
     <div>
@@ -235,7 +239,45 @@ function ConnectScreen({ go, setBank }) {
                   </div>
                 ))}
               </div>
+              <div className="of-other" onClick={() => setPhase("unsupported")}>הבנק שלי לא ברשימה</div>
               <div className="of-foot"><Icon name="shield" /> מאושר ומפוקח לפי תקן הבנקאות הפתוחה בישראל</div>
+            </div>
+          )}
+
+          {phase === "unsupported" && (
+            <div className="of-body">
+              <div className="of-redirect">
+                <span className="ico-soft"><Icon name="building" /></span>
+                <h3>הבנק שלך עוד לא כאן — בקרוב</h3>
+                <p className="p">אנחנו מוסיפים בנקים בהדרגה לפי כיסוי הבנקאות הפתוחה. נשמח לעדכן אותך ברגע שהבנק שלך יצטרף — בלי שתצטרך לבדוק.</p>
+                <button className="btn btn-green btn-block" onClick={() => setPhase("notify")}>עדכנו אותי כשהבנק שלי יתווסף</button>
+                <button className="btn btn-ghost btn-block" style={{ marginTop: 10 }} onClick={() => setPhase("choose")}>חזרה לרשימת הבנקים</button>
+              </div>
+            </div>
+          )}
+
+          {phase === "notify" && (
+            <div className="of-body">
+              <div className="of-redirect">
+                <div className="confirm" style={{ padding: 0, margin: 0 }}>
+                  <div className="check" style={{ width: 72, height: 72, marginBottom: 16 }}><Icon name="check" style={{ width: 36, height: 36 }} /></div>
+                </div>
+                <h3>מעולה, נעדכן אותך</h3>
+                <p className="p">נשלח לך הודעה ברגע שהבנק שלך יצטרף לשירות. בינתיים אפשר להמשיך להפקיד ידנית מתי שנוח לך.</p>
+                <button className="btn btn-ghost btn-block" onClick={() => go(0)}>חזרה לאזור האישי</button>
+              </div>
+            </div>
+          )}
+
+          {phase === "error" && (
+            <div className="of-body">
+              <div className="of-redirect">
+                <span className="ico-soft warn"><Icon name="info" /></span>
+                <h3>החיבור לא הושלם הפעם</h3>
+                <p className="p">משהו השתבש בדרך חזרה מ{sel?.n} — זה קורה לפעמים ולא קשור אליך. אפשר לנסות שוב עכשיו, או להמשיך אחר כך מאותה נקודה.</p>
+                <button className="btn btn-green btn-block" onClick={() => choose(sel)}>ננסה שוב</button>
+                <button className="btn btn-ghost btn-block" style={{ marginTop: 10 }} onClick={() => go(0)}>נמשיך אחר כך</button>
+              </div>
             </div>
           )}
 

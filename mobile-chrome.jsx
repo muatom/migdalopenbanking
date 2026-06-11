@@ -105,4 +105,14 @@ function MBand({ crumbs, title, sub }) {
 
 const mnf = (n) => Number(n).toLocaleString("en-US");
 
-Object.assign(window, { StatusBar, MHeader, BottomNav, MBand, TOWER_SRC, LOGO_WHITE, mnf });
+/* ---------- Shared demo helpers (dates, allocation destination) ---------- */
+const mHeDate = (d) => String(d.getDate()).padStart(2, "0") + "/" + String(d.getMonth() + 1).padStart(2, "0") + "/" + d.getFullYear();
+const mTodayHe = () => mHeDate(new Date());
+const mMonthFirst = (back) => { const t = new Date(); return mHeDate(new Date(t.getFullYear(), t.getMonth() - back, 1)); };
+const mMonthDay = (back, day) => { const t = new Date(); return mHeDate(new Date(t.getFullYear(), t.getMonth() - back, day)); };
+const mDestFromAlloc = (a) => !a ? "קופת גמל להשקעה"
+  : a.gemel >= 100 ? "קופת גמל להשקעה"
+  : a.policy >= 100 ? "פוליסת חיסכון"
+  : a.gemel + "% גמל · " + a.policy + "% פוליסה";
+
+Object.assign(window, { StatusBar, MHeader, BottomNav, MBand, TOWER_SRC, LOGO_WHITE, mnf, mHeDate, mTodayHe, mMonthFirst, mMonthDay, mDestFromAlloc });

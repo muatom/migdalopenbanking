@@ -13,12 +13,17 @@ const MBANKS = [
 /* ============================================================
    SCREEN 2 — CONNECT BANK
    ============================================================ */
-function MConnect({ go, setBank }) {
-  const [phase, setPhase] = useStateMB("choose");
-  const [sel, setSel] = useStateMB(null);
+function MConnect({ go, setBank, bank }) {
+  const [phase, setPhase] = useStateMB(bank ? "done" : "choose"); // choose | redirect | error | done | unsupported | notify
+  const [sel, setSel] = useStateMB(bank || null);
+  const [failedOnce, setFailedOnce] = useStateMB(false);
   function choose(b) {
-    setSel(b); setBank(b); setPhase("redirect");
-    setTimeout(() => setPhase("done"), 2100);
+    setSel(b); setPhase("redirect");
+    if (b.n === "בנק גליל" && !failedOnce) {
+      setTimeout(() => { setFailedOnce(true); setPhase("error"); }, 2100);
+    } else {
+      setTimeout(() => { setBank(b); setPhase("done"); }, 2100);
+    }
   }
   return (
     <div className="m-scroll">
@@ -50,8 +55,35 @@ function MConnect({ go, setBank }) {
                   </div>
                 ))}
               </div>
+              <div className="of-other" onClick={() => setPhase("unsupported")}>הבנק שלי לא ברשימה</div>
               <div className="sh-foot"><Icon name="shield" /> מאושר ומפוקח לפי תקן הבנקאות הפתוחה בישראל</div>
             </React.Fragment>
+          )}
+          {phase === "unsupported" && (
+            <div className="m-redirect">
+              <span className="ico-soft"><Icon name="building" /></span>
+              <h3>הבנק שלך עוד לא כאן — בקרוב</h3>
+              <p className="p">אנחנו מוסיפים בנקים בהדרגה לפי כיסוי הבנקאות הפתוחה. נשמח לעדכן אותך ברגע שהבנק שלך יצטרף.</p>
+              <button className="m-btn m-btn-green" style={{ marginTop: 16 }} onClick={() => setPhase("notify")}>עדכנו אותי כשהבנק יתווסף</button>
+              <button className="m-btn-text" onClick={() => setPhase("choose")}>חזרה לרשימת הבנקים</button>
+            </div>
+          )}
+          {phase === "notify" && (
+            <div className="m-redirect">
+              <div className="m-bigcheck"><Icon name="check" /></div>
+              <h3>מעולה, נעדכן אותך</h3>
+              <p className="p">נשלח לך הודעה ברגע שהבנק שלך יצטרף. בינתיים אפשר להמשיך להפקיד ידנית מתי שנוח.</p>
+              <button className="m-btn-text" onClick={() => go(0)}>חזרה לאזור האישי</button>
+            </div>
+          )}
+          {phase === "error" && (
+            <div className="m-redirect">
+              <span className="ico-soft warn"><Icon name="info" /></span>
+              <h3>החיבור לא הושלם הפעם</h3>
+              <p className="p">משהו השתבש בדרך חזרה מ{sel?.n} — זה קורה לפעמים ולא קשור אליך. אפשר לנסות שוב.</p>
+              <button className="m-btn m-btn-green" style={{ marginTop: 16 }} onClick={() => choose(sel)}>ננסה שוב</button>
+              <button className="m-btn-text" onClick={() => go(0)}>נמשיך אחר כך</button>
+            </div>
           )}
           {phase === "redirect" && (
             <div className="m-redirect">
@@ -154,7 +186,7 @@ function MWizRules({ wz, upd }) {
   const money = (id, key, label, sub) => (
     <div className="m-capfield">
       <span className="pl">{label}{sub && <em>{sub}</em>}</span>
-      <div className="fld"><input type="text" value={"₪" + mnf(sel[id][key])}
+      <div className="fld"><span className="cur">₪</span><input type="text" value={mnf(sel[id][key])}
         onChange={(e) => setP(id, key, Number(e.target.value.replace(/[^\d]/g, "")) || 0)} /></div>
     </div>
   );
@@ -204,7 +236,10 @@ function MWizRules({ wz, upd }) {
 /* ---- Sub 2: Allocation + Approval + Guardrails ---- */
 function MWizAllocation({ wz, upd }) {
   const a = wz.alloc; const total = a.gemel + a.policy;
-  function setA(key, v) { upd({ alloc: { ...a, [key]: Math.max(0, Math.min(100, v)) } }); }
+  function setA(key, v) {
+    const x = Math.max(0, Math.min(100, isNaN(v) ? 0 : v));
+    upd({ alloc: key === "gemel" ? { gemel: x, policy: 100 - x } : { policy: x, gemel: 100 - x } });
+  }
   const ap = wz.approval, g = wz.guard;
   return (
     <div>
@@ -218,7 +253,7 @@ function MWizAllocation({ wz, upd }) {
         </div>
         <div className="m-alloc">
           <span className="ai"><Icon name="shield" /></span>
-          <div className="an"><b>פוליסת חיסכון</b><small>POL-22841</small></div>
+          <div className="an"><b>פוליסת חיסכון</b><small>8225841</small></div>
           <div className="ap"><input type="number" value={a.policy} onChange={(e) => setA("policy", Number(e.target.value))} /><span className="pc">%</span></div>
         </div>
         <div className="m-alloc-total">
@@ -229,7 +264,7 @@ function MWizAllocation({ wz, upd }) {
         </div>
         <div className="m-note">
           <Icon name="route" />
-          <div><b>Cap-aware Spillover.</b><p>קופת הגמל הגיעה לתקרה השנתית? החלק שלה יעבור אוטומטית לפוליסת החיסכון — בלי לעצור.</p></div>
+          <div><b>הגעת לתקרה? ממשיכים לחסוך.</b><p>קופת הגמל הגיעה לתקרה השנתית? החלק שלה יעבור אוטומטית לפוליסת החיסכון — בלי לעצור.</p></div>
         </div>
       </div>
 
@@ -244,7 +279,7 @@ function MWizAllocation({ wz, upd }) {
           </div>
         </div>
         <div className="m-approve">
-          <div className="ar-t"><b>ההזדמנות (חודש חזק)</b><p>בקשת אישור (R2P) שתאשר באפליקציית הבנק שלך.</p></div>
+          <div className="ar-t"><b>ההזדמנות (חודש חזק)</b><p>בקשת הפקדה שתאשר באפליקציית הבנק שלך.</p></div>
           <div className="m-seg">
             <button className={ap.opp === "auto" ? "on" : ""} onClick={() => upd({ approval: { ...ap, opp: "auto" } })}>אוטופיילוט</button>
             <button className={ap.opp === "r2p" ? "on" : ""} onClick={() => upd({ approval: { ...ap, opp: "r2p" } })}>באישור</button>
@@ -253,16 +288,16 @@ function MWizAllocation({ wz, upd }) {
       </div>
 
       <div className="m-q">
-        <div className="qh">גארדריילים — הביטחון שלך</div>
-        <div className="qs">מומלץ להשאיר דלוקים. אלה הגבולות ששומרים על ״בלי לפגוע ברמת החיים״.</div>
+        <div className="qh">מנגנוני הגנה — הביטחון שלך</div>
+        <div className="qs">מומלץ להשאיר דלוקים. אלה הגבולות ששומרים על ״בלי לפגוע ברמת החיים״ — חלים על הפקדות ההזדמנות.</div>
         <div className="m-guard">
           <div className="gr-t"><b>רצפת יתרה בעו״ש</b><p>מתחת לסכום הזה — לא נבצע הפקדות הזדמנות נוספות החודש. הרצפה תמיד מתבצעת.</p></div>
-          <div className="gr-field"><input type="text" value={"₪" + mnf(g.balanceFloor)}
+          <div className="gr-field"><span className="cur">₪</span><input type="text" value={mnf(g.balanceFloor)}
             onChange={(e) => upd({ guard: { ...g, balanceFloor: Number(e.target.value.replace(/[^\d]/g, "")) || 0 } })} /></div>
         </div>
         <div className="m-guard">
-          <div className="gr-t"><b>תקרה חודשית כוללת</b><p>סך מקסימלי שיופקד דרך הפיצ׳ר בחודש.</p></div>
-          <div className="gr-field"><input type="text" value={"₪" + mnf(g.monthlyCap)}
+          <div className="gr-t"><b>תקרה חודשית כוללת</b><p>סך מקסימלי שיופקד דרך השירות בחודש.</p></div>
+          <div className="gr-field"><span className="cur">₪</span><input type="text" value={mnf(g.monthlyCap)}
             onChange={(e) => upd({ guard: { ...g, monthlyCap: Number(e.target.value.replace(/[^\d]/g, "")) || 0 } })} /></div>
         </div>
         <div className="m-guard">
@@ -275,29 +310,42 @@ function MWizAllocation({ wz, upd }) {
 }
 
 /* ---- Sub 3: Goal + Review ---- */
-function MWizGoal({ wz, upd, bank }) {
+function MWizGoal({ wz, upd, bank, go }) {
   const activeRules = M_RULE_DEFS.filter((r) => wz.rules[r.id].on);
+  const edit = (n) => <span className="m-rev-edit" onClick={() => go(n)}><Icon name="pencil" /></span>;
   return (
     <div>
       <div className="m-q">
         <div className="qh">יעד חיסכון (אופציונלי)</div>
         <div className="qs">הגדר יעד לקופת הגמל להשקעה, ונראה לך את ההתקדמות אליו.</div>
-        <div className="m-goal-amt"><div className="gv"><small>₪</small>{mnf(wz.goal)}</div></div>
-        <input className="m-slider" type="range" min="20000" max="300000" step="10000" value={wz.goal}
-          style={{ "--fill": ((wz.goal - 20000) / 280000 * 100) + "%", marginTop: 18 }}
-          onChange={(e) => upd({ goal: Number(e.target.value) })} />
-        <div className="m-slider-ends"><span>₪20,000</span><span>₪300,000</span></div>
+        {wz.goal != null ? (
+          <React.Fragment>
+            <div className="m-goal-amt"><div className="gv"><small>₪</small>{mnf(wz.goal)}</div></div>
+            <input className="m-slider" type="range" min="20000" max="300000" step="10000" value={wz.goal}
+              style={{ "--fill": ((wz.goal - 20000) / 280000 * 100) + "%", marginTop: 18 }}
+              onChange={(e) => upd({ goal: Number(e.target.value) })} />
+            <div className="m-slider-ends"><span>₪20,000</span><span>₪300,000</span></div>
+            <div className="m-center" style={{ marginTop: 14 }}>
+              <button className="m-btn-text" onClick={() => upd({ goal: null })}>דלג — בלי יעד בינתיים</button>
+            </div>
+          </React.Fragment>
+        ) : (
+          <div className="m-center" style={{ padding: "8px 0 4px" }}>
+            <p style={{ color: "var(--mig-slate-600)", fontSize: 14, margin: "0 0 12px" }}>בחרת להמשיך בלי יעד. אפשר להוסיף יעד בכל רגע מאזור החיסכון.</p>
+            <button className="m-btn m-btn-ghost" onClick={() => upd({ goal: 100000 })}>בעצם, קבע לי יעד</button>
+          </div>
+        )}
       </div>
 
       <div className="m-q">
         <div className="qh">סיכום לפני הפעלה</div>
         <div className="m-review">
-          <div className="m-rev"><span className="rl"><Icon name="banknote" /> רצפה חודשית</span><span className="rv">₪{mnf(wz.floor)}<span className="sm">{wz.approval.floor === "auto" ? "אוטופיילוט" : "באישור"}</span></span></div>
-          <div className="m-rev"><span className="rl"><Icon name="sparkles" /> חוקי הזדמנות</span><span className="rv">{activeRules.length ? activeRules.map((r) => r.t).join(" · ") : "—"}<span className="sm">{wz.approval.opp === "auto" ? "אוטופיילוט" : "באישור (R2P)"}</span></span></div>
-          <div className="m-rev"><span className="rl"><Icon name="route" /> הקצאה</span><span className="rv">{wz.alloc.gemel}% גמל · {wz.alloc.policy}% פוליסה</span></div>
-          <div className="m-rev"><span className="rl"><Icon name="shield-check" /> גארדריילים</span><span className="rv">{wz.guard.on ? "פעילים" : "כבויים"}<span className="sm">יתרה ₪{mnf(wz.guard.balanceFloor)} · תקרה ₪{mnf(wz.guard.monthlyCap)}</span></span></div>
-          <div className="m-rev"><span className="rl"><Icon name="target" /> יעד</span><span className="rv">₪{mnf(wz.goal)}</span></div>
-          <div className="m-rev"><span className="rl"><Icon name="link2" /> חשבון מחובר</span><span className="rv">{bank ? bank.n : "—"}</span></div>
+          <div className="m-rev"><span className="rl"><Icon name="banknote" /> רצפה חודשית</span><span className="rv">₪{mnf(wz.floor)}<span className="sm">{wz.approval.floor === "auto" ? "אוטופיילוט" : "באישור"}</span></span>{edit(3)}</div>
+          <div className="m-rev"><span className="rl"><Icon name="sparkles" /> חוקי הזדמנות</span><span className="rv">{activeRules.length ? activeRules.map((r) => r.t).join(" · ") : "ללא חוקים"}<span className="sm">{wz.approval.opp === "auto" ? "אוטופיילוט" : "באישור באפליקציית הבנק"}</span></span>{edit(4)}</div>
+          <div className="m-rev"><span className="rl"><Icon name="route" /> הקצאה</span><span className="rv">{wz.alloc.gemel}% גמל · {wz.alloc.policy}% פוליסה</span>{edit(5)}</div>
+          <div className="m-rev"><span className="rl"><Icon name="shield-check" /> מנגנוני הגנה</span><span className="rv">{wz.guard.on ? "פעילים" : "כבויים"}<span className="sm">יתרה ₪{mnf(wz.guard.balanceFloor)} · תקרה ₪{mnf(wz.guard.monthlyCap)}</span></span>{edit(5)}</div>
+          <div className="m-rev"><span className="rl"><Icon name="target" /> יעד</span><span className="rv">{wz.goal != null ? "₪" + mnf(wz.goal) : "ללא יעד"}</span></div>
+          <div className="m-rev"><span className="rl"><Icon name="link2" /> חשבון מחובר</span><span className="rv">{bank ? bank.n : "—"}</span>{edit(2)}</div>
         </div>
       </div>
     </div>
@@ -306,6 +354,7 @@ function MWizGoal({ wz, upd, bank }) {
 
 function MWizard({ step, go, wz, upd, bank }) {
   const sub = step - 3;
+  const allocOk = wz.alloc.gemel + wz.alloc.policy === 100;
   return (
     <React.Fragment>
       <div className="m-scroll">
@@ -317,14 +366,14 @@ function MWizard({ step, go, wz, upd, bank }) {
           {sub === 0 && <MWizFloor wz={wz} upd={upd} />}
           {sub === 1 && <MWizRules wz={wz} upd={upd} />}
           {sub === 2 && <MWizAllocation wz={wz} upd={upd} />}
-          {sub === 3 && <MWizGoal wz={wz} upd={upd} bank={bank} />}
+          {sub === 3 && <MWizGoal wz={wz} upd={upd} bank={bank} go={go} />}
         </div>
       </div>
       <div className="m-wizfoot">
         <button className="back" onClick={() => go(step - 1)}><Icon name="chevron-right" /> חזרה</button>
         {sub < 3
-          ? <button className="m-btn m-btn-green" onClick={() => go(step + 1)}>המשך <Icon name="arrow-left" /></button>
-          : <button className="m-btn m-btn-green" onClick={() => go(7)}>הפעל את חיסכון חכם <Icon name="check" /></button>}
+          ? <button className="m-btn m-btn-green" disabled={sub === 2 && !allocOk} onClick={() => go(step + 1)}>המשך <Icon name="arrow-left" /></button>
+          : <button className="m-btn m-btn-green" disabled={!allocOk} onClick={() => go(7)}>הפעל את חיסכון חכם <Icon name="check" /></button>}
       </div>
     </React.Fragment>
   );

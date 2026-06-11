@@ -539,3 +539,88 @@ img { display: block; }
 .card-dep { display: inline-flex; align-items: center; gap: 7px; background: rgba(162,235,154,.22); color: var(--success); font-weight: 800; font-size: 14px; padding: 9px 18px; border-radius: 999px; }
 .card-dep:hover { background: rgba(162,235,154,.4); }
 .card-dep svg { width: 16px; height: 16px; }
+
+/* ---------- Currency adornment on money inputs ---------- */
+.guard-field { display: inline-flex; align-items: center; gap: 4px; }
+.guard-field .cur { font-family: var(--font-display); font-weight: 800; font-size: 16px; color: var(--mig-slate-600); }
+.guard-field input { border: none; outline: none; background: none; width: 78px; font-family: var(--font-display); font-weight: 800; font-size: 18px; text-align: center; color: var(--mig-ink); }
+.guard-row .guard-field, .rule-field .guard-field { border: 1.6px solid var(--mig-line); border-radius: 10px; padding: 8px 12px; }
+.guard-row .guard-field:focus-within, .rule-field .guard-field:focus-within { border-color: var(--mig-blue); box-shadow: var(--sh-focus); }
+
+/* ---------- Connect: unsupported / error states ---------- */
+.of-other { text-align: center; margin: 14px 0 0; font-size: 14px; font-weight: 700; color: var(--mig-blue); cursor: pointer; }
+.of-other:hover { text-decoration: underline; }
+.of-redirect .ico-soft { width: 64px; height: 64px; border-radius: 50%; background: var(--mig-mist); color: var(--mig-blue); display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; }
+.of-redirect .ico-soft.warn { background: rgba(143,118,54,.12); color: var(--warning); }
+.of-redirect .ico-soft svg { width: 32px; height: 32px; }
+
+/* ---------- Review inline edit ---------- */
+.rev-edit { color: var(--mig-blue); cursor: pointer; display: inline-flex; align-items: center; margin-right: 10px; flex: none; align-self: center; }
+.rev-edit:hover { color: var(--mig-blue-deep); }
+.rev-edit svg { width: 16px; height: 16px; }
+.rev-row { align-items: center; }
+
+/* ---------- Dashboard responsive columns ---------- */
+.dash-cols { display: grid; grid-template-columns: 1.3fr 1fr; gap: 22px; align-items: start; }
+@media (max-width: 1040px) { .dash-cols { grid-template-columns: 1fr; } }
+
+/* ---------- Surplus trend (mini bars in tile) ---------- */
+.surplus-trend { display: flex; align-items: flex-end; justify-content: space-between; gap: 10px; margin-top: 8px; }
+.surplus-trend .st-bars { display: flex; align-items: flex-end; gap: 7px; height: 38px; }
+.surplus-trend .st-col { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; }
+.surplus-trend .st-bar { width: 12px; border-radius: 4px 4px 0 0; background: rgba(255,255,255,.55); min-height: 4px; }
+.surplus-trend .st-col:last-child .st-bar { background: #fff; }
+.surplus-trend .st-m { font-size: 9.5px; font-weight: 700; opacity: .8; margin-top: 4px; }
+.surplus-trend .st-delta { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 800; opacity: .95; align-self: flex-end; padding-bottom: 4px; }
+.surplus-trend .st-delta svg { width: 14px; height: 14px; }
+
+/* ---------- Skip-this-month notice ---------- */
+.skip-note { display: flex; align-items: center; gap: 14px; background: var(--mig-mist); border: 1px solid var(--mig-line); border-radius: 16px; padding: 18px 22px; margin-bottom: 24px; }
+.skip-note .sn-ico { width: 40px; height: 40px; border-radius: 50%; background: var(--mig-green); color: var(--mig-ink); display: flex; align-items: center; justify-content: center; flex: none; }
+.skip-note .sn-ico svg { width: 22px; height: 22px; }
+.skip-note .sn-txt { flex: 1; }
+.skip-note .sn-txt b { font-family: var(--font-display); font-weight: 800; font-size: 17px; color: var(--mig-ink); }
+.skip-note .sn-txt p { margin: 3px 0 0; font-size: 14px; color: var(--mig-slate-600); }
+.skip-note .sn-undo { background: #fff; border: 1.5px solid var(--mig-line); color: var(--mig-blue); font-weight: 800; font-size: 14px; padding: 9px 18px; border-radius: 999px; flex: none; }
+.skip-note .sn-undo:hover { border-color: var(--mig-blue); }
+
+/* ---------- Opportunity card actions / amount edit ---------- */
+.opp-actions { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+.opp-actions .btn { font-size: 15px; padding: 11px 22px; }
+.opp-actions .btn-ghost { background: rgba(255,255,255,.12); color: #fff; border: 1.5px solid rgba(255,255,255,.3); }
+.opp-actions .btn-ghost:hover { background: rgba(255,255,255,.2); }
+.opp-amt-edit { display: flex; align-items: center; gap: 16px; background: rgba(255,255,255,.1); border-radius: 14px; padding: 10px 16px; margin-bottom: 16px; width: fit-content; }
+.opp-amt-edit .oae-l { font-size: 14px; font-weight: 700; color: #cdd3ee; }
+.amount.sm { gap: 12px; margin: 0; }
+.amount.sm button { width: 36px; height: 36px; font-size: 18px; }
+.amount.sm .val { font-size: 28px; min-width: 120px; color: #fff; }
+.amount.sm .val small { font-size: 18px; }
+
+/* ---------- Empty states ---------- */
+.goal-card.empty { display: flex; align-items: center; gap: 16px; }
+.goal-card.empty .ge-ico { width: 48px; height: 48px; border-radius: 14px; background: var(--mig-line-soft); color: var(--mig-blue); display: flex; align-items: center; justify-content: center; flex: none; }
+.goal-card.empty .ge-ico svg { width: 24px; height: 24px; }
+.goal-card.empty .ge-txt { flex: 1; }
+.goal-card.empty .ge-txt b { font-family: var(--font-display); font-weight: 800; font-size: 18px; color: var(--mig-ink); }
+.goal-card.empty .ge-txt p { margin: 3px 0 0; font-size: 14px; color: var(--mig-slate-600); }
+.rule-empty { padding: 14px 4px; font-size: 14px; color: var(--mig-slate-600); }
+.rule-empty .lnk { color: var(--mig-blue); font-weight: 800; cursor: pointer; }
+
+/* ---------- Confirm dialog ---------- */
+.confirm-dialog { padding: 32px 30px 26px; text-align: center; }
+.confirm-dialog .cd-ico { width: 64px; height: 64px; border-radius: 50%; background: var(--mig-mist); color: var(--mig-ink); display: flex; align-items: center; justify-content: center; margin: 0 auto 18px; }
+.confirm-dialog .cd-ico.danger { background: rgba(182,80,88,.12); color: var(--error); }
+.confirm-dialog .cd-ico svg { width: 30px; height: 30px; }
+.confirm-dialog h3 { font-family: var(--font-display); font-weight: 800; font-size: 23px; color: var(--mig-ink); margin: 0 0 10px; }
+.confirm-dialog .cd-body { font-size: 15px; color: var(--mig-slate-600); line-height: 1.55; margin: 0 0 24px; }
+.confirm-dialog .cd-list { text-align: right; margin: 0 auto; max-width: 320px; padding: 0; list-style: none; }
+.confirm-dialog .cd-list li { position: relative; padding: 6px 22px 6px 0; }
+.confirm-dialog .cd-list li::before { content: "•"; position: absolute; right: 6px; color: var(--mig-blue); font-weight: 800; }
+.confirm-dialog .cd-actions { display: flex; flex-direction: column; gap: 10px; }
+.btn-danger { background: var(--error); color: #fff; }
+.btn-danger:hover { background: #a3454d; }
+
+/* ---------- Equal-weight bank push actions ---------- */
+.push-card .pc-actions.two { flex-direction: row; }
+.push-card .pc-actions.two button { flex: 1; }
+.push-card .pc-actions.two .decline { background: var(--mig-mist); border-radius: 12px; }
